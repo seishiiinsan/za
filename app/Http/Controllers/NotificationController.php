@@ -25,6 +25,29 @@ class NotificationController extends Controller
         ]);
     }
 
+    /** Ouvrir la cloche vaut lecture : tout ce qui est affiché passe en lu. */
+    public function readAll(): RedirectResponse
+    {
+        $alter = $this->front->currentOrFail();
+
+        $this->notifier->visibleTo($alter)->whereNull('read_at')->get()
+            ->each(fn (AlterNotification $notification) => $this->notifier->markRead($notification));
+
+        return back();
+    }
+
+    /** Retirer une notification de l'affichage. */
+    public function destroy(Request $request, AlterNotification $notification): RedirectResponse
+    {
+        $alterIds = $request->user()->alters()->pluck('id');
+
+        abort_unless($alterIds->contains($notification->alter_id), 404);
+
+        $notification->delete();
+
+        return back();
+    }
+
     public function read(Request $request, AlterNotification $notification): RedirectResponse
     {
         $alterIds = $request->user()->alters()->pluck('id');

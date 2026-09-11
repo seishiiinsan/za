@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import { Head, useForm } from '@inertiajs/vue3'
 import AppLayout from '../../Layouts/AppLayout.vue'
+import Icon from '../../Components/Icon.vue'
+import { alterGradient } from '../../lib/alter'
 
 const props = defineProps({
   alter: { type: Object, default: null },
@@ -19,8 +21,12 @@ const form = useForm({
   show_connections: props.alter?.show_connections ?? false,
   notify_system: props.alter?.notify_system ?? false,
   delegate_to: props.alter?.delegate_to ?? null,
+  color: props.alter?.color ?? null,
   avatar: null,
 })
+
+// Les six teintes du produit, plus « automatique » : dérivée de l'identifiant.
+const swatches = [0, 1, 2, 3, 4, 5].map((index) => ({ index, style: alterGradient(String(index)) }))
 
 const currentLevel = computed(() =>
   props.privacyLevels.find((level) => level.value === form.privacy_level)
@@ -39,6 +45,9 @@ function submit() {
       <h1 class="font-display text-3xl">{{ alter ? 'Éditer un alter' : 'Nouvel alter' }}</h1>
 
       <div class="za-card flex flex-col gap-4 p-6">
+        <p class="flex items-center gap-2 text-sm font-semibold text-muted">
+          <Icon name="people" :size="17" /> Identité publique
+        </p>
         <label class="block">
           <span class="za-label">Nom</span>
           <input v-model="form.name" required maxlength="60" class="za-input" />
@@ -80,6 +89,38 @@ function submit() {
       </div>
 
       <div class="za-card flex flex-col gap-4 p-6">
+        <p class="flex items-center gap-2 text-sm font-semibold text-muted">
+          <Icon name="shield" :size="17" /> Visibilité et notifications
+        </p>
+
+        <div>
+          <span class="za-label">Couleur</span>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              class="flex h-9 w-9 items-center justify-center rounded-full border text-xs transition"
+              :class="form.color === null ? 'border-accent text-accent' : 'border-line text-faint hover:text-muted'"
+              title="Automatique"
+              @click="form.color = null"
+            >
+              auto
+            </button>
+            <button
+              v-for="swatch in swatches"
+              :key="swatch.index"
+              type="button"
+              class="h-9 w-9 rounded-full transition"
+              :style="{ background: swatch.style.background }"
+              :class="form.color === swatch.index ? 'ring-2 ring-accent ring-offset-2 ring-offset-ground' : 'opacity-80 hover:opacity-100'"
+              :aria-label="`Couleur ${swatch.index + 1}`"
+              @click="form.color = swatch.index"
+            />
+          </div>
+          <span class="za-eyebrow mt-1.5 block">
+            Sert de repère dans le fil et la messagerie. Elle ne dit rien de l'alter.
+          </span>
+        </div>
+
         <label class="block">
           <span class="za-label">Grade de confidentialité</span>
           <select v-model="form.privacy_level" class="za-input">

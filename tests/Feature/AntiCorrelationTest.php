@@ -53,7 +53,8 @@ class AntiCorrelationTest extends TestCase
         $payload = (new AlterResource($alter))->resolve();
 
         $this->assertSame([
-            'id', 'name', 'handle', 'pronouns', 'bio', 'avatar_url', 'privacy_level', 'is_private', 'deleted',
+            'id', 'name', 'handle', 'pronouns', 'bio', 'avatar_url', 'privacy_level', 'is_private',
+            'color', 'deleted',
         ], array_keys($payload));
     }
 

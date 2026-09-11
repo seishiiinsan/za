@@ -61,8 +61,8 @@ class TwoFactor
     {
         $writer = new Writer(new ImageRenderer(
             new RendererStyle($size, 1, null, null, Fill::uniformColor(
-                new Rgb(10, 10, 10),      // fond, accordé au thème sombre
-                new Rgb(237, 233, 254),   // modules
+                new Rgb(247, 239, 232),   // crème chaud, lisible par les scanners
+                new Rgb(25, 28, 36),      // modules
             )),
             new SvgImageBackEnd,
         ));

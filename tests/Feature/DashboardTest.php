@@ -29,7 +29,9 @@ class DashboardTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Dashboard')
                 ->has('alters.data', 2)
-                ->has('posts.data', 2));
+                // Onglet perso : seulement l'alter au front. Onglet système : les deux.
+                ->has('posts.data', 1)
+                ->has('systemPosts.data', 2));
     }
 
     public function test_the_aggregated_feed_has_no_public_route(): void

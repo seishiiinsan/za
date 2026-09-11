@@ -22,7 +22,9 @@ class Conversation extends Model
     /** @return BelongsToMany<Correspondent, $this> */
     public function participants(): BelongsToMany
     {
-        return $this->belongsToMany(Correspondent::class, 'conversation_participants')->withTimestamps();
+        return $this->belongsToMany(Correspondent::class, 'conversation_participants')
+            ->withPivot('last_read_at')
+            ->withTimestamps();
     }
 
     /** @return HasMany<Message, $this> */
