@@ -31,7 +31,7 @@ class AuthTest extends TestCase
         $system = System::factory()->create(['password' => Hash::make('secret-solide')]);
 
         $this->post('/login', ['email' => $system->email, 'password' => 'secret-solide'])
-            ->assertRedirect('/alters');
+            ->assertRedirect('/dashboard');
         $this->assertAuthenticatedAs($system);
 
         $this->post('/logout')->assertRedirect('/login');
@@ -70,8 +70,8 @@ class AuthTest extends TestCase
         $this->assertTrue(Hash::check('nouveau-mot-de-passe', $system->fresh()->password));
     }
 
-    public function test_guests_cannot_reach_the_alters_screen(): void
+    public function test_guests_cannot_reach_the_dashboard(): void
     {
-        $this->get('/alters')->assertRedirect('/login');
+        $this->get('/dashboard')->assertRedirect('/login');
     }
 }

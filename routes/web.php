@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredSystemController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FrontController;
@@ -39,6 +40,8 @@ Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
  * Espace système authentifié : gestion des alters.
  */
 Route::middleware('auth')->group(function () {
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
     Route::get('alters', [AlterController::class, 'index'])->name('alters.index');
     Route::get('alters/create', [AlterController::class, 'create'])->name('alters.create');
     Route::post('alters', [AlterController::class, 'store'])->name('alters.store');
