@@ -15,11 +15,11 @@ class FrontController extends Controller
     public function update(Request $request, Front $front): RedirectResponse
     {
         $data = $request->validate([
-            'alter_id' => ['required', 'integer'],
+            'alter_id' => ['required', 'uuid'],
         ]);
 
         /** @var Alter|null $alter */
-        $alter = $request->user()->alters()->find($data['alter_id']);
+        $alter = $request->user()->alters()->where('uuid', $data['alter_id'])->first();
 
         abort_if($alter === null, 404);
 

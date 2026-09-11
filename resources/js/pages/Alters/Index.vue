@@ -2,12 +2,19 @@
 import { Head, Link, router } from '@inertiajs/vue3'
 import AppLayout from '../../Layouts/AppLayout.vue'
 
-defineProps({ alters: { type: Object, required: true } })
+defineProps({
+  alters: { type: Object, required: true },
+  trashed: { type: Object, required: true },
+})
 
 function destroy(alter) {
-  if (confirm(`Supprimer « ${alter.name} » ? Ses posts et abonnements partent avec.`)) {
+  if (confirm(`Supprimer « ${alter.name} » ? Il disparaît de toutes les surfaces, mais reste restaurable.`)) {
     router.delete(`/alters/${alter.id}`)
   }
+}
+
+function restore(alter) {
+  router.post(`/alters/${alter.id}/restore`)
 }
 </script>
 
@@ -44,5 +51,22 @@ function destroy(alter) {
     </ul>
 
     <p v-if="!alters.data.length" class="text-sm text-neutral-500">Aucun alter pour l'instant.</p>
+
+    <section v-if="trashed.data.length" class="space-y-2">
+      <h2 class="text-sm uppercase tracking-wide text-neutral-500">Supprimés</h2>
+      <p class="text-xs text-neutral-600">
+        Invisibles partout : profil, recherche, feed, listes d'abonnements. Restaurables tels quels.
+      </p>
+      <div
+        v-for="alter in trashed.data"
+        :key="alter.id"
+        class="flex items-center gap-3 rounded-lg border border-dashed border-neutral-800 p-3 text-sm text-neutral-500"
+      >
+        <span>Alter supprimé</span>
+        <button class="ml-auto text-xs text-violet-400 hover:text-violet-300" @click="restore(alter)">
+          Restaurer
+        </button>
+      </div>
+    </section>
   </AppLayout>
 </template>

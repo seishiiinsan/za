@@ -7,7 +7,7 @@ const alters = computed(() => page.props.auth.alters)
 const active = computed(() => page.props.auth.activeAlter)
 
 function switchTo(event) {
-  const id = Number(event.target.value)
+  const id = event.target.value
   if (!id || id === active.value?.id) return
   router.put('/front', { alter_id: id }, { preserveScroll: true })
 }

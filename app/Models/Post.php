@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicUuid;
 use Database\Factories\PostFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Post extends Model
 {
     /** @use HasFactory<PostFactory> */
-    use HasFactory;
+    use HasFactory, HasPublicUuid;
 
     public const STATUS_PENDING = 'pending';
 
@@ -26,7 +27,10 @@ class Post extends Model
     /** @return BelongsToMany<Alter, $this> */
     public function authors(): BelongsToMany
     {
+        // `withTrashed` : un auteur supprimé reste rattaché au post, mais il
+        // est rendu anonyme par le serializer public.
         return $this->belongsToMany(Alter::class, 'post_authors')
+            ->withTrashed()
             ->withPivot('accepted')
             ->withTimestamps();
     }

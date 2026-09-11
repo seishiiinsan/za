@@ -13,7 +13,7 @@ class PostResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->uuid,
             'content' => $this->content,
             'status' => $this->status,
             'created_at' => $this->created_at?->toIso8601String(),

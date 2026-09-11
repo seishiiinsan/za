@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\PrivacyLevel;
 use App\Http\Resources\AlterResource;
 use App\Models\Alter;
+use App\Support\AvatarStorage;
 use App\Support\Front;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,12 +15,15 @@ use Inertia\Response;
 
 class AlterController extends Controller
 {
-    public function __construct(protected Front $front) {}
+    public function __construct(protected Front $front, protected AvatarStorage $avatars) {}
 
     public function index(Request $request): Response
     {
         return Inertia::render('Alters/Index', [
             'alters' => AlterResource::collection($request->user()->alters()->orderBy('name')->get()),
+            'trashed' => AlterResource::collection(
+                $request->user()->alters()->onlyTrashed()->orderBy('name')->get()
+            ),
         ]);
     }
 
@@ -69,8 +73,9 @@ class AlterController extends Controller
     {
         $this->authorizeAlter($request, $alter);
 
-        // MVP : suppression dure (posts et follows partent en cascade).
-        // La politique de rétention fine est traitée dans une issue dédiée.
+        // Suppression douce : l'alter disparaît de toutes les surfaces (profil,
+        // recherche, feed, listes) mais reste restaurable. Ses posts existants
+        // s'affichent sous un auteur anonyme.
         if ($this->front->current()?->is($alter)) {
             $this->front->clear();
         }
@@ -78,7 +83,17 @@ class AlterController extends Controller
         $alter->delete();
         $this->front->ensure();
 
-        return redirect()->route('alters.index')->with('status', 'Alter supprimé.');
+        return redirect()->route('alters.index')
+            ->with('status', "Alter « {$alter->name} » supprimé. Il reste restaurable.");
+    }
+
+    public function restore(Request $request, string $uuid): RedirectResponse
+    {
+        $alter = $request->user()->alters()->onlyTrashed()->where('uuid', $uuid)->firstOrFail();
+
+        $alter->restore();
+
+        return redirect()->route('alters.index')->with('status', "Alter « {$alter->name} » restauré.");
     }
 
     protected function authorizeAlter(Request $request, Alter $alter): void
@@ -110,7 +125,7 @@ class AlterController extends Controller
     protected function withAvatar(Request $request, array $data): array
     {
         if ($request->hasFile('avatar')) {
-            $data['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
+            $data['avatar_path'] = $this->avatars->store($request->file('avatar'));
         }
 
         // Listes followers/abonnements masquées par défaut (anti-corrélation par graphe).

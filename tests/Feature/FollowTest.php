@@ -15,7 +15,7 @@ class FollowTest extends TestCase
         $follower = Alter::factory()->create();
         $target = Alter::factory()->create();
 
-        $this->actingAsFront($follower)->post("/alters/{$target->id}/follow");
+        $this->actingAsFront($follower)->post("/alters/{$target->uuid}/follow");
 
         $this->assertDatabaseHas('follows', [
             'follower_alter_id' => $follower->id,
@@ -29,7 +29,7 @@ class FollowTest extends TestCase
         $follower = Alter::factory()->create();
         $target = Alter::factory()->private()->create();
 
-        $this->actingAsFront($follower)->post("/alters/{$target->id}/follow");
+        $this->actingAsFront($follower)->post("/alters/{$target->uuid}/follow");
 
         $this->assertDatabaseHas('follows', [
             'follower_alter_id' => $follower->id,
@@ -44,13 +44,13 @@ class FollowTest extends TestCase
         $target = Alter::factory()->private()->create();
         $target->followers()->attach($follower->getKey(), ['accepted' => false]);
 
-        $this->actingAsFront($target)->post("/follows/requests/{$follower->id}");
+        $this->actingAsFront($target)->post("/follows/requests/{$follower->uuid}");
         $this->assertDatabaseHas('follows', [
             'follower_alter_id' => $follower->id,
             'accepted' => true,
         ]);
 
-        $this->actingAsFront($follower)->delete("/alters/{$target->id}/follow");
+        $this->actingAsFront($follower)->delete("/alters/{$target->uuid}/follow");
         $this->assertDatabaseCount('follows', 0);
     }
 
@@ -60,7 +60,7 @@ class FollowTest extends TestCase
         $target = Alter::factory()->private()->create();
         $target->followers()->attach($follower->getKey(), ['accepted' => false]);
 
-        $this->actingAsFront($target)->delete("/follows/requests/{$follower->id}");
+        $this->actingAsFront($target)->delete("/follows/requests/{$follower->uuid}");
 
         $this->assertDatabaseCount('follows', 0);
     }
@@ -69,7 +69,7 @@ class FollowTest extends TestCase
     {
         $alter = Alter::factory()->create();
 
-        $this->actingAsFront($alter)->post("/alters/{$alter->id}/follow")->assertStatus(422);
+        $this->actingAsFront($alter)->post("/alters/{$alter->uuid}/follow")->assertStatus(422);
     }
 
     public function test_connection_lists_are_hidden_by_default(): void

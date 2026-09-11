@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
             $table->text('content');
             // pending | published — pending sert aux co/cross-posts (v2).
             $table->string('status')->default('published')->index();

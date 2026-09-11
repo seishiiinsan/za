@@ -53,7 +53,7 @@ class AntiCorrelationTest extends TestCase
         $payload = (new AlterResource($alter))->resolve();
 
         $this->assertSame([
-            'id', 'name', 'handle', 'pronouns', 'bio', 'avatar_url', 'privacy_level', 'is_private',
+            'id', 'name', 'handle', 'pronouns', 'bio', 'avatar_url', 'privacy_level', 'is_private', 'deleted',
         ], array_keys($payload));
     }
 
@@ -62,6 +62,24 @@ class AntiCorrelationTest extends TestCase
         $alter = Alter::factory()->create();
 
         $this->assertArrayNotHasKey('system_id', $alter->toArray());
+    }
+
+    public function test_public_identifiers_are_opaque(): void
+    {
+        [, $kai, $nori] = $this->systemWithTwoAlters();
+
+        // Deux alters d'un même système ont des ids internes consécutifs :
+        // seul l'identifiant public opaque doit sortir.
+        $this->assertSame($kai->id + 1, $nori->id);
+
+        foreach ([$kai, $nori] as $alter) {
+            $this->get("/@{$alter->handle}")
+                ->assertInertia(fn ($page) => $page
+                    ->where('alter.id', $alter->uuid)
+                    ->where('alter.id', fn ($id) => ! is_numeric($id)));
+        }
+
+        $this->get("/@{$kai->handle}")->assertDontSee('"id":'.$kai->id, false);
     }
 
     public function test_search_does_not_recommend_accounts(): void
