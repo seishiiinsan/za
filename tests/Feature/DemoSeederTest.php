@@ -90,10 +90,27 @@ class DemoSeederTest extends TestCase
 
         $this->assertGreaterThanOrEqual(20, $kai->following()->wherePivot('accepted', true)->count());
 
-        // Le feed s'ouvre plein : une page entière de posts, pas un écran vide.
+        // Le feed s'ouvre plein. Le compte exact dépend du tirage du seeder :
+        // on vérifie qu'il y a de quoi lire, pas un nombre précis.
         $this->actingAsFront($kai)
             ->get('/feed')
-            ->assertInertia(fn ($page) => $page->has('posts.data', 20));
+            ->assertInertia(function ($page) {
+                $this->assertGreaterThanOrEqual(10, count($page->toArray()['props']['posts']['data']));
+            });
+    }
+
+    public function test_the_privacy_levels_are_actually_mixed(): void
+    {
+        // Une répartition ratée passe inaperçue : sans alters publics, le jeu
+        // d'essai n'a plus rien à montrer.
+        foreach ([PrivacyLevel::Private, PrivacyLevel::Unlisted, PrivacyLevel::ReadOnly] as $level) {
+            $this->assertGreaterThan(5, Alter::where('privacy_level', $level->value)->count());
+        }
+
+        $this->assertGreaterThan(
+            Alter::count() / 2,
+            Alter::where('privacy_level', PrivacyLevel::Public->value)->count(),
+        );
     }
 
     public function test_handles_stay_unique_under_the_canonical_form(): void

@@ -112,6 +112,9 @@ class DemoSeeder extends Seeder
     protected function seedAlters(Collection $systems, Handles $handles, Carbon $start): Collection
     {
         $alters = collect();
+        // Compteur continu : `$index * 10 + $position` retombait toujours sur
+        // la position modulo 10, et presque aucun alter n'était public.
+        $seed = 0;
 
         foreach ($systems as $index => $system) {
             // Entre un et six alters : un système n'a pas de taille standard.
@@ -121,7 +124,7 @@ class DemoSeeder extends Seeder
             $names = $index === 0 ? ['Kai', 'Nori', 'Sora'] : [];
             $count = $index === 0 ? 3 : $count;
 
-            for ($position = 0; $position < $count; $position++) {
+            for ($position = 0; $position < $count; $position++, $seed++) {
                 $name = $names[$position] ?? DemoContent::NAMES[($index * 3 + $position) % count(DemoContent::NAMES)];
 
                 $alter = $system->alters()->create([
@@ -133,7 +136,7 @@ class DemoSeeder extends Seeder
                     'bio' => DemoContent::BIOS[($index * 2 + $position) % count(DemoContent::BIOS)],
                     'privacy_level' => $index === 0
                         ? PrivacyLevel::Public
-                        : $this->privacyFor($index * 10 + $position),
+                        : $this->privacyFor($seed),
                     'settings' => [
                         'show_connections' => $position === 0 && $index % 7 === 0,
                         'notify_system' => $index % 3 === 0,
@@ -431,24 +434,20 @@ class DemoSeeder extends Seeder
             $follows = $others->random(min(30, $others->count()));
 
             foreach ($follows as $followed) {
-                DB::table('follows')->insertOrIgnore([
-                    'follower_alter_id' => $alter->id,
-                    'followed_alter_id' => $followed->id,
-                    'accepted' => true,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                // `updateOrInsert` : la passe générale a pu créer la même
+                // relation en attente, on la confirme au lieu de l'ignorer.
+                DB::table('follows')->updateOrInsert(
+                    ['follower_alter_id' => $alter->id, 'followed_alter_id' => $followed->id],
+                    ['accepted' => true, 'created_at' => now(), 'updated_at' => now()],
+                );
             }
 
             // Quelques abonnés en retour, dont des demandes à traiter.
-            foreach ($others->random(8) as $index => $follower) {
-                DB::table('follows')->insertOrIgnore([
-                    'follower_alter_id' => $follower->id,
-                    'followed_alter_id' => $alter->id,
-                    'accepted' => $index > 2,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            foreach ($others->random(8)->values() as $index => $follower) {
+                DB::table('follows')->updateOrInsert(
+                    ['follower_alter_id' => $follower->id, 'followed_alter_id' => $alter->id],
+                    ['accepted' => $index > 2, 'created_at' => now(), 'updated_at' => now()],
+                );
             }
 
             foreach (range(1, 10) as $step) {
