@@ -10,6 +10,9 @@ return new class extends Migration
     {
         Schema::create('alters', function (Blueprint $table) {
             $table->id();
+            // Seul identifiant exposé : deux alters d'un même système ne doivent
+            // pas se suivre dans la numérotation.
+            $table->uuid('uuid')->unique();
             // JAMAIS exposé publiquement (invariant d'anti-corrélation).
             $table->foreignId('system_id')->constrained()->cascadeOnDelete();
             $table->string('name');
@@ -19,6 +22,7 @@ return new class extends Migration
             $table->text('bio')->nullable();
             $table->string('privacy_level')->default('public');
             $table->json('settings')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

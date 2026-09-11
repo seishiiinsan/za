@@ -33,7 +33,7 @@ class PostTest extends TestCase
         $kai = Alter::factory()->for($system)->create();
         $nori = Alter::factory()->for($system)->create();
 
-        $this->actingAsFront($kai)->put('/front', ['alter_id' => $nori->id]);
+        $this->actingAsFront($kai)->put('/front', ['alter_id' => $nori->uuid]);
         $this->actingAsFront($nori)->post('/posts', ['content' => 'Écrit par Nori']);
 
         $this->assertTrue(Post::sole()->authors()->whereKey($nori->getKey())->exists());
@@ -45,10 +45,10 @@ class PostTest extends TestCase
         $post = Post::factory()->create();
         $post->authors()->attach($alter->getKey(), ['accepted' => true]);
 
-        $this->actingAsFront($alter)->put("/posts/{$post->id}", ['content' => 'Corrigé']);
+        $this->actingAsFront($alter)->put("/posts/{$post->uuid}", ['content' => 'Corrigé']);
         $this->assertSame('Corrigé', $post->fresh()->content);
 
-        $this->actingAsFront($alter)->delete("/posts/{$post->id}");
+        $this->actingAsFront($alter)->delete("/posts/{$post->uuid}");
         $this->assertDatabaseMissing('posts', ['id' => $post->id]);
     }
 
@@ -59,7 +59,7 @@ class PostTest extends TestCase
         $post = Post::factory()->create();
         $post->authors()->attach($mine->getKey(), ['accepted' => true]);
 
-        $this->actingAsFront($theirs)->delete("/posts/{$post->id}")->assertNotFound();
+        $this->actingAsFront($theirs)->delete("/posts/{$post->uuid}")->assertNotFound();
         $this->assertDatabaseHas('posts', ['id' => $post->id]);
     }
 

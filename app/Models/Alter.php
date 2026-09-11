@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\Enums\PrivacyLevel;
+use App\Models\Concerns\HasPublicUuid;
 use Database\Factories\AlterFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * L'alter est l'unité publique : profil, posts, follows.
@@ -17,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Alter extends Model
 {
     /** @use HasFactory<AlterFactory> */
-    use HasFactory;
+    use HasFactory, HasPublicUuid, SoftDeletes;
 
     protected $fillable = ['name', 'handle', 'pronouns', 'avatar_path', 'bio', 'privacy_level', 'settings'];
 

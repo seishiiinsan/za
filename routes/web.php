@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
     Route::get('alters/{alter}/edit', [AlterController::class, 'edit'])->name('alters.edit');
     Route::put('alters/{alter}', [AlterController::class, 'update'])->name('alters.update');
     Route::delete('alters/{alter}', [AlterController::class, 'destroy'])->name('alters.destroy');
+    Route::post('alters/{uuid}/restore', [AlterController::class, 'restore'])->name('alters.restore');
 
     Route::put('front', [FrontController::class, 'update'])->name('front.update');
 

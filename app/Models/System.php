@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicUuid;
 use Database\Factories\SystemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,7 +16,7 @@ use Illuminate\Notifications\Notifiable;
 class System extends Authenticatable
 {
     /** @use HasFactory<SystemFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasPublicUuid, Notifiable;
 
     protected $fillable = ['email', 'password', 'display_name', 'description', 'settings'];
 

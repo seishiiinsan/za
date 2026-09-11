@@ -33,7 +33,9 @@ class AlterProfileController extends Controller
             : null;
 
         return Inertia::render('Profile/Show', [
-            'alter' => new AlterResource($alter),
+            // `resolve()` : une ressource unique serait sinon enveloppée dans
+            // une clé `data`, que la page n'attend pas.
+            'alter' => (new AlterResource($alter))->resolve(),
             'visible' => $visible,
             'isSelf' => $viewer?->is($alter) ?? false,
             'isFollowing' => $alter->isFollowedBy($viewer),

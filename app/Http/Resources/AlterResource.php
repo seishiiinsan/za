@@ -17,8 +17,23 @@ class AlterResource extends JsonResource
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
+        // Un alter supprimé ne laisse plus ni nom ni handle derrière lui.
+        if ($this->trashed()) {
+            return [
+                'id' => $this->uuid,
+                'name' => 'Inconnu',
+                'handle' => null,
+                'pronouns' => null,
+                'bio' => null,
+                'avatar_url' => null,
+                'privacy_level' => null,
+                'is_private' => true,
+                'deleted' => true,
+            ];
+        }
+
         return [
-            'id' => $this->id,
+            'id' => $this->uuid,
             'name' => $this->name,
             'handle' => $this->handle,
             'pronouns' => $this->pronouns,
@@ -26,6 +41,7 @@ class AlterResource extends JsonResource
             'avatar_url' => $this->avatar_path ? asset('storage/'.$this->avatar_path) : null,
             'privacy_level' => $this->privacy_level->value,
             'is_private' => ! $this->privacy_level->isOpen(),
+            'deleted' => false,
         ];
     }
 }

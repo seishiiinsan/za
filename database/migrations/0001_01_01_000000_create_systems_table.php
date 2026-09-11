@@ -10,6 +10,9 @@ return new class extends Migration
     {
         Schema::create('systems', function (Blueprint $table) {
             $table->id();
+            // Identifiant public opaque : les ids séquentiels permettraient de
+            // rapprocher deux comptes créés à la suite.
+            $table->uuid('uuid')->unique();
             $table->string('email')->unique();
             $table->string('password');
             // Surface publique optionnelle (messagerie partagée, v2). Jamais liée aux alters.

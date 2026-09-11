@@ -22,7 +22,7 @@ class FrontSwitchTest extends TestCase
 
         $this->actingAsFront($kai)
             ->from('/feed')
-            ->put('/front', ['alter_id' => $nori->id])
+            ->put('/front', ['alter_id' => $nori->uuid])
             ->assertRedirect('/feed');
 
         $this->assertAuthenticatedAs($system);
@@ -35,7 +35,7 @@ class FrontSwitchTest extends TestCase
         $theirs = Alter::factory()->create();
 
         $this->actingAsFront($mine)
-            ->put('/front', ['alter_id' => $theirs->id])
+            ->put('/front', ['alter_id' => $theirs->uuid])
             ->assertNotFound();
     }
 
