@@ -364,6 +364,7 @@ php vendor/bin/phpunit tests/Feature/AntiCorrelationTest.php   # invariant, bloq
   tient par un point de sortie unique (`AlterResource`), `$hidden` sur le modèle et un test
   bloquant qui scanne les réponses publiques. Reste à cadrer avec l'hébergement : chiffrement
   du volume, gestion des clés, et sauvegardes chiffrées elles aussi.
+  Côté logs, le masquage est en place : voir `app/Logging/RedactSystemId.php`.
 - **Suppression d'alter** : cascade dure (posts et follows partent avec). La politique de
   rétention fine fait l'objet d'une issue dédiée.
 - **Grade `lecture`** : le cahier des charges ne parle que des réactions. L'implémentation
