@@ -306,3 +306,51 @@ Au moment de bloquer, choix entre deux cibles :
 | 4 | Statut RGPD donnée de santé | À cadrer avant prod |
 | 5 | Trous de contexte à la migration messagerie | Assumé (v2) / résolu par capture-à-la-réception |
 | 6 | Développeur = point unique de corrélation | Dette d'accès notée |
+
+---
+
+## Annexe — Démarrage (MVP implémenté)
+
+```bash
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+touch database/database.sqlite
+php artisan migrate --seed      # compte de démo : system@za.test / password
+php artisan storage:link
+npm run build                   # ou npm run dev
+php artisan serve
+```
+
+Qualité :
+
+```bash
+vendor/bin/pint --test          # style
+php vendor/bin/phpunit          # suite complète
+php vendor/bin/phpunit tests/Feature/AntiCorrelationTest.php   # invariant, bloquant en CI
+```
+
+### Ce que couvre le MVP
+
+| Périmètre | Où |
+|---|---|
+| Auth système (inscription, connexion, reset) | `app/Http/Controllers/Auth/`, `config/auth.php` |
+| CRUD alters + avatar | `app/Http/Controllers/AlterController.php` |
+| Front actif en session | `app/Support/Front.php`, `app/Http/Middleware/EnsureActiveAlter.php` |
+| Posts solo (pivot `post_authors` prêt pour N auteurs) | `app/Models/Post.php`, `PostController` |
+| Feed public + dashboard système agrégé | `FeedController`, `DashboardController` |
+| Follow alter ↔ alter, demandes, listes masquées par défaut | `FollowController`, `Alter::showsConnections()` |
+| Grades public / privé | `app/Enums/PrivacyLevel.php`, `Alter::isVisibleTo()` |
+| Invariant anti-corrélation | `app/Http/Resources/AlterResource.php`, `tests/Feature/AntiCorrelationTest.php` |
+
+### Écarts assumés
+
+- **Chiffrement de `system_id` au repos** : non fait. Chiffrer la clé étrangère casserait
+  l'intégrité référentielle et les jointures. L'invariant repose ici sur un point de sortie
+  unique (`AlterResource`), `$hidden` sur le modèle, et un test bloquant qui scanne les
+  réponses publiques. Le chiffrement au repos reste à traiter au niveau du stockage
+  (volume/colonne chiffrée) dans l'issue Sécurité.
+- **Suppression d'alter** : cascade dure (posts et follows partent avec). La politique de
+  rétention fine fait l'objet d'une issue dédiée.
+- **Grades non-listé / lecture, messagerie, co-posts, blocage, notifications** : v2.
