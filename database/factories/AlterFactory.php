@@ -31,4 +31,14 @@ class AlterFactory extends Factory
     {
         return $this->state(['privacy_level' => PrivacyLevel::Private]);
     }
+
+    public function unlisted(): static
+    {
+        return $this->state(['privacy_level' => PrivacyLevel::Unlisted]);
+    }
+
+    public function readOnly(): static
+    {
+        return $this->state(['privacy_level' => PrivacyLevel::ReadOnly]);
+    }
 }

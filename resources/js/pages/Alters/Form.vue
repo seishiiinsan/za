@@ -63,6 +63,9 @@ function submit() {
         <select v-model="form.privacy_level" class="mt-1 w-full rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm">
           <option v-for="level in privacyLevels" :key="level.value" :value="level.value">{{ level.label }}</option>
         </select>
+        <span class="mt-1 block text-xs text-neutral-600">
+          {{ privacyLevels.find((level) => level.value === form.privacy_level)?.description }}
+        </span>
       </label>
 
       <label class="flex items-center gap-2 text-sm text-neutral-400">

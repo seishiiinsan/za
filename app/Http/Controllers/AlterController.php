@@ -140,7 +140,11 @@ class AlterController extends Controller
     protected function privacyLevels(): array
     {
         return array_map(
-            fn (PrivacyLevel $level) => ['value' => $level->value, 'label' => $level->label()],
+            fn (PrivacyLevel $level) => [
+                'value' => $level->value,
+                'label' => $level->label(),
+                'description' => $level->description(),
+            ],
             PrivacyLevel::cases()
         );
     }

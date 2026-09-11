@@ -93,7 +93,22 @@ class Alter extends Model
     /** Un alter privé fait valider ses abonnés. */
     public function requiresFollowApproval(): bool
     {
-        return ! $this->privacy_level->isOpen();
+        return $this->privacy_level === PrivacyLevel::Private;
+    }
+
+    public function canPublish(): bool
+    {
+        return $this->privacy_level->canPublish();
+    }
+
+    public function canReact(): bool
+    {
+        return $this->privacy_level->canReact();
+    }
+
+    public function hasPublicProfile(): bool
+    {
+        return $this->privacy_level->hasPublicProfile();
     }
 
     /** Les listes followers/abonnements sont masquées par défaut (anti-corrélation). */
@@ -102,10 +117,21 @@ class Alter extends Model
         return (bool) ($this->settings['show_connections'] ?? false);
     }
 
-    /** @param Builder<Alter> $query */
+    /** Alters visibles dans la recherche. @param Builder<Alter> $query */
     public function scopeSearchable(Builder $query): void
     {
-        // MVP : public et privé restent cherchables (les grades non-listé/lecture arrivent en v2).
-        $query->whereIn('privacy_level', [PrivacyLevel::Public->value, PrivacyLevel::Private->value]);
+        $query->whereIn('privacy_level', array_map(
+            fn (PrivacyLevel $level) => $level->value,
+            array_filter(PrivacyLevel::cases(), fn (PrivacyLevel $level) => $level->isSearchable())
+        ));
+    }
+
+    /** Alters disposant d'un profil public, ne serait-ce que par lien direct. @param Builder<Alter> $query */
+    public function scopeWithPublicProfile(Builder $query): void
+    {
+        $query->whereIn('privacy_level', array_map(
+            fn (PrivacyLevel $level) => $level->value,
+            array_filter(PrivacyLevel::cases(), fn (PrivacyLevel $level) => $level->hasPublicProfile())
+        ));
     }
 }
