@@ -19,7 +19,8 @@ class AlterProfileController extends Controller
 {
     public function show(Request $request, string $handle, Front $front): Response
     {
-        $alter = Alter::query()->searchable()->where('handle', $handle)->firstOrFail();
+        // Le non-listé garde son profil : c'est la recherche qui l'ignore.
+        $alter = Alter::query()->withPublicProfile()->where('handle', $handle)->firstOrFail();
 
         $viewer = $front->current();
         $visible = $alter->isVisibleTo($viewer);

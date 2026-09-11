@@ -22,6 +22,9 @@ class PostController extends Controller
         ]);
 
         $alter = $this->front->currentOrFail();
+
+        abort_unless($alter->canPublish(), 403, 'Ce grade de confidentialité ne permet pas de publier.');
+
         $invited = $this->invitedAuthors($data['co_authors'] ?? [], $alter);
 
         $post = Post::create(['content' => $data['content']]);
@@ -75,7 +78,10 @@ class PostController extends Controller
         return Alter::query()
             ->whereIn('uuid', array_unique($uuids))
             ->whereKeyNot($author->getKey())
-            ->get();
+            ->get()
+            // Un alter en lecture seule ne peut pas être embarqué comme co-auteur.
+            ->filter(fn (Alter $alter) => $alter->canPublish())
+            ->values();
     }
 
     /** Un post n'est éditable que par un de ses auteurs, et depuis le bon système. */
