@@ -15,6 +15,7 @@ use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FrontController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessagingSettingsController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostInvitationController;
 use App\Http\Controllers\ReactionController;
@@ -88,6 +89,9 @@ Route::middleware('auth')->group(function () {
         Route::post('conversations', [ConversationController::class, 'store'])->name('conversations.store');
         Route::get('conversations/{conversation}', [ConversationController::class, 'show'])->name('conversations.show');
         Route::post('conversations/{conversation}/messages', [MessageController::class, 'store'])->name('messages.store');
+
+        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
 
         Route::get('blocks', [BlockController::class, 'index'])->name('blocks.index');
         Route::post('alters/{alter}/block', [BlockController::class, 'store'])->name('blocks.store');

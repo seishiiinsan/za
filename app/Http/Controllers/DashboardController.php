@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\AlterResource;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
+use App\Support\Notifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -16,6 +17,8 @@ use Inertia\Response;
  */
 class DashboardController extends Controller
 {
+    public function __construct(protected Notifier $notifier) {}
+
     public function index(Request $request): Response
     {
         $alters = $request->user()->alters()->orderBy('name')->get();
@@ -34,6 +37,11 @@ class DashboardController extends Controller
             'posts' => PostResource::collection($posts),
             'pendingRequests' => $alters->sum(
                 fn ($alter) => $alter->followers()->wherePivot('accepted', false)->count()
+            ),
+            // Remontée système : seules les notifications des alters qui
+            // l'ont autorisée apparaissent ici.
+            'notifications' => NotificationController::present(
+                $this->notifier->escalatedTo($alters)->limit(30)->get()
             ),
             'pendingInvitations' => DB::table('post_authors')
                 ->whereIn('alter_id', $alterIds)

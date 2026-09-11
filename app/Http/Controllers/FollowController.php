@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\AlterResource;
 use App\Models\Alter;
+use App\Models\AlterNotification;
 use App\Support\BlockList;
 use App\Support\Front;
+use App\Support\Notifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -16,7 +18,11 @@ use Inertia\Response;
  */
 class FollowController extends Controller
 {
-    public function __construct(protected Front $front, protected BlockList $blocks) {}
+    public function __construct(
+        protected Front $front,
+        protected BlockList $blocks,
+        protected Notifier $notifier,
+    ) {}
 
     public function store(Alter $alter): RedirectResponse
     {
@@ -30,6 +36,12 @@ class FollowController extends Controller
         $alter->followers()->syncWithoutDetaching([
             $follower->getKey() => ['accepted' => $accepted],
         ]);
+
+        $this->notifier->notify(
+            $alter,
+            $accepted ? AlterNotification::TYPE_FOLLOW : AlterNotification::TYPE_FOLLOW_REQUEST,
+            ['actor' => $follower->name, 'handle' => $follower->handle],
+        );
 
         return back()->with('status', $accepted ? 'Abonnement créé.' : 'Demande envoyée.');
     }

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -109,6 +110,28 @@ class Alter extends Model
     public function hasPublicProfile(): bool
     {
         return $this->privacy_level->hasPublicProfile();
+    }
+
+    /** @return HasMany<AlterNotification, $this> */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(AlterNotification::class)->latest('id');
+    }
+
+    /** Les notifications de cet alter remontent-elles au dashboard système ? */
+    public function notifiesSystem(): bool
+    {
+        return (bool) ($this->settings['notify_system'] ?? false);
+    }
+
+    /** Alter délégué pour traiter les notifications de celui-ci, s'il y en a un. */
+    public function delegate(): ?Alter
+    {
+        $uuid = $this->settings['delegate_to'] ?? null;
+
+        return $uuid === null
+            ? null
+            : static::query()->where('system_id', $this->system_id)->where('uuid', $uuid)->first();
     }
 
     /** Les listes followers/abonnements sont masquées par défaut (anti-corrélation). */

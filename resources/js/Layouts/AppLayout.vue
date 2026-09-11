@@ -14,6 +14,7 @@ const links = [
   { href: '/follows', label: 'Abonnements' },
   { href: '/posts/invitations', label: 'Invitations' },
   { href: '/conversations', label: 'Messages' },
+  { href: '/notifications', label: 'Notifications' },
   { href: '/blocks', label: 'Blocages' },
   { href: '/search', label: 'Recherche' },
 ]

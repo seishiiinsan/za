@@ -5,6 +5,7 @@ import AppLayout from '../../Layouts/AppLayout.vue'
 const props = defineProps({
   alter: { type: Object, default: null },
   privacyLevels: { type: Array, required: true },
+  siblings: { type: Object, required: true },
 })
 
 const form = useForm({
@@ -15,6 +16,8 @@ const form = useForm({
   bio: props.alter?.bio ?? '',
   privacy_level: props.alter?.privacy_level ?? 'public',
   show_connections: props.alter?.show_connections ?? false,
+  notify_system: props.alter?.notify_system ?? false,
+  delegate_to: props.alter?.delegate_to ?? null,
   avatar: null,
 })
 
@@ -73,6 +76,22 @@ function submit() {
         Afficher mes listes followers / abonnements
       </label>
       <p class="text-xs text-neutral-600">Masquées par défaut : elles peuvent servir à corréler deux alters.</p>
+
+      <label class="flex items-center gap-2 text-sm text-neutral-400">
+        <input v-model="form.notify_system" type="checkbox" />
+        Remonter mes notifications au dashboard système
+      </label>
+
+      <label v-if="siblings.data.length" class="block text-sm">
+        Déléguer mes notifications
+        <select v-model="form.delegate_to" class="mt-1 w-full rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm">
+          <option :value="null">Personne</option>
+          <option v-for="sibling in siblings.data" :key="sibling.id" :value="sibling.id">{{ sibling.name }}</option>
+        </select>
+        <span class="mt-1 block text-xs text-neutral-600">
+          Un autre alter du système peut traiter vos demandes à votre place. Ce lien reste privé.
+        </span>
+      </label>
 
       <button :disabled="form.processing" class="w-full rounded-md bg-violet-600 px-4 py-2 text-sm font-medium hover:bg-violet-500 disabled:opacity-50">
         Enregistrer
