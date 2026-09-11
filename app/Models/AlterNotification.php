@@ -22,7 +22,7 @@ class AlterNotification extends Model
 
     public const TYPE_MESSAGE = 'message';
 
-    protected $fillable = ['alter_id', 'type', 'payload', 'read_at'];
+    protected $fillable = ['alter_id', 'type', 'group_uuid', 'payload', 'read_at'];
 
     protected function casts(): array
     {

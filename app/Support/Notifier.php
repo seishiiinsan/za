@@ -6,6 +6,7 @@ use App\Models\Alter;
 use App\Models\AlterNotification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 /**
  * Notifications au niveau alter.
@@ -17,13 +18,50 @@ use Illuminate\Support\Collection;
 class Notifier
 {
     /** @param array<string, mixed> $payload */
-    public function notify(Alter $recipient, string $type, array $payload = []): ?AlterNotification
+    public function notify(Alter $recipient, string $type, array $payload = [], ?string $group = null): ?AlterNotification
     {
         return AlterNotification::create([
             'alter_id' => $recipient->getKey(),
             'type' => $type,
+            'group_uuid' => $group,
             'payload' => $payload,
         ]);
+    }
+
+    /**
+     * Une même notification adressée à plusieurs alters : en messagerie
+     * partagée, la boîte est commune. Les copies partagent un groupe, si bien
+     * qu'un seul alter suffit à la marquer lue pour tout le système.
+     *
+     * @param  iterable<Alter>  $recipients
+     * @param  array<string, mixed>  $payload
+     */
+    public function notifyTogether(iterable $recipients, string $type, array $payload = []): void
+    {
+        $group = (string) Str::uuid();
+
+        foreach ($recipients as $recipient) {
+            $this->notify($recipient, $type, $payload, $group);
+        }
+    }
+
+    /**
+     * Marque une notification lue, ainsi que toutes celles du même groupe.
+     *
+     * @return int Nombre de notifications marquées lues.
+     */
+    public function markRead(AlterNotification $notification): int
+    {
+        if ($notification->group_uuid === null) {
+            $notification->update(['read_at' => now()]);
+
+            return 1;
+        }
+
+        return AlterNotification::query()
+            ->where('group_uuid', $notification->group_uuid)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
     }
 
     /** Notifie chaque auteur d'un post, sauf celui qui déclenche l'événement. */

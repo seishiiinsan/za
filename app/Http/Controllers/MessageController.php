@@ -53,13 +53,12 @@ class MessageController extends Controller
             default => collect(),
         };
 
-        foreach ($recipients as $recipient) {
-            $this->notifier->notify($recipient, AlterNotification::TYPE_MESSAGE, [
-                // Le nom affiché est celui du correspondant, pas celui de
-                // l'alter qui écrit : la surface système reste entière.
-                'actor' => $this->messaging->correspondentFor($author)->displayName(),
-                'conversation' => $conversation->uuid,
-            ]);
-        }
+        // Notification groupée : lue par un alter, lue pour tout le système.
+        $this->notifier->notifyTogether($recipients, AlterNotification::TYPE_MESSAGE, [
+            // Le nom affiché est celui du correspondant, pas celui de l'alter
+            // qui écrit : la surface système reste entière.
+            'actor' => $this->messaging->correspondentFor($author)->displayName(),
+            'conversation' => $conversation->uuid,
+        ]);
     }
 }

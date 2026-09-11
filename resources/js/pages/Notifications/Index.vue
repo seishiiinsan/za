@@ -37,6 +37,7 @@ function markRead(notification) {
           <p class="text-xs text-neutral-600">
             pour {{ notification.for }}
             <span v-if="notification.delegated" class="text-violet-400">· délégué</span>
+            <span v-if="notification.shared" class="text-neutral-600">· boîte commune</span>
           </p>
         </div>
         <button
@@ -44,7 +45,7 @@ function markRead(notification) {
           class="ml-auto text-xs text-neutral-500 hover:text-neutral-200"
           @click="markRead(notification)"
         >
-          Marquer lu
+          {{ notification.shared ? 'Marquer lu pour tous' : 'Marquer lu' }}
         </button>
       </li>
     </ul>
