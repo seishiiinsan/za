@@ -10,7 +10,10 @@ class Message extends Model
 {
     use HasPublicUuid;
 
-    protected $fillable = ['content', 'author_correspondent_id', 'author_alter_id'];
+    protected $fillable = [
+        'content', 'author_correspondent_id', 'author_alter_id',
+        'conversation_id', 'origin_conversation_id', 'created_at',
+    ];
 
     /** @return BelongsTo<Conversation, $this> */
     public function conversation(): BelongsTo
