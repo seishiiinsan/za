@@ -7,6 +7,8 @@ use App\Http\Resources\AlterResource;
 use App\Models\Alter;
 use App\Support\AvatarStorage;
 use App\Support\Front;
+use App\Support\Handles;
+use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -15,15 +17,26 @@ use Inertia\Response;
 
 class AlterController extends Controller
 {
-    public function __construct(protected Front $front, protected AvatarStorage $avatars) {}
+    public function __construct(
+        protected Front $front,
+        protected AvatarStorage $avatars,
+        protected Handles $handles,
+    ) {}
 
     public function index(Request $request): Response
     {
         return Inertia::render('Alters/Index', [
             'alters' => AlterResource::collection($request->user()->alters()->orderBy('name')->get()),
-            'trashed' => AlterResource::collection(
-                $request->user()->alters()->onlyTrashed()->orderBy('name')->get()
-            ),
+            // Vue privée du système : ses propres alters supprimés gardent
+            // leur nom, contrairement aux surfaces publiques.
+            'trashed' => $request->user()->alters()->onlyTrashed()->orderBy('name')->get()
+                ->map(fn (Alter $alter) => [
+                    'id' => $alter->uuid,
+                    'name' => $alter->name,
+                    'previous_handle' => $alter->settings['handle_before_delete'] ?? null,
+                    'handle_available' => ($previous = $alter->settings['handle_before_delete'] ?? null) !== null
+                        && $this->handles->isAvailableFor($previous, $alter),
+                ])->values(),
         ]);
     }
 
@@ -70,7 +83,20 @@ class AlterController extends Controller
     {
         $this->authorizeAlter($request, $alter);
 
-        $alter->update($this->withAvatar($request, $this->validated($request, $alter)));
+        $data = $this->withAvatar($request, $this->validated($request, $alter));
+        $previous = $alter->handle;
+
+        if ($this->handles->normalize($data['handle']) !== $alter->handle_key) {
+            $data['handle_changed_at'] = now();
+        }
+
+        $alter->forceFill($data)->save();
+
+        if ($previous !== $alter->handle) {
+            // L'ancien handle ne repart pas dans le stock tout de suite : le
+            // reprendre permettrait de se faire passer pour l'alter.
+            $this->handles->quarantine($previous, $alter);
+        }
 
         return redirect()->route('alters.index')->with('status', 'Alter mis à jour.');
     }
@@ -86,20 +112,39 @@ class AlterController extends Controller
             $this->front->clear();
         }
 
+        $alter->forceFill([
+            'settings' => array_merge($alter->settings ?? [], ['handle_before_delete' => $alter->handle]),
+            'handle' => $this->handles->placeholderFor($alter),
+        ])->save();
+
         $alter->delete();
         $this->front->ensure();
 
-        return redirect()->route('alters.index')
-            ->with('status', "Alter « {$alter->name} » supprimé. Il reste restaurable.");
+        return redirect()->route('alters.index')->with(
+            'status',
+            "Alter « {$alter->name} » supprimé. Son handle @{$alter->settings['handle_before_delete']} est de nouveau libre."
+        );
     }
 
     public function restore(Request $request, string $uuid): RedirectResponse
     {
         $alter = $request->user()->alters()->onlyTrashed()->where('uuid', $uuid)->firstOrFail();
+        $wanted = $request->input('handle', $alter->settings['handle_before_delete'] ?? null);
 
+        if ($wanted === null
+            || $this->handles->isReservedWord($wanted)
+            || ! $this->handles->matchesFormat($wanted)
+            || ! $this->handles->isAvailableFor($wanted, $alter)) {
+            return back()->with(
+                'error',
+                "Le handle @{$wanted} n'est plus disponible : choisissez-en un autre pour restaurer « {$alter->name} »."
+            );
+        }
+
+        $alter->forceFill(['handle' => $wanted])->save();
         $alter->restore();
 
-        return redirect()->route('alters.index')->with('status', "Alter « {$alter->name} » restauré.");
+        return redirect()->route('alters.index')->with('status', "Alter « {$alter->name} » restauré sous @{$wanted}.");
     }
 
     protected function authorizeAlter(Request $request, Alter $alter): void
@@ -113,8 +158,34 @@ class AlterController extends Controller
         return $request->validate([
             'name' => ['required', 'string', 'max:60'],
             'handle' => [
-                'required', 'string', 'max:30', 'regex:/^[a-z0-9_]+$/',
-                Rule::unique('alters', 'handle')->ignore($alter),
+                'required', 'string',
+                'min:'.Handles::MIN_LENGTH, 'max:'.Handles::MAX_LENGTH,
+                'regex:/^[a-z0-9_]+$/',
+                function (string $attribute, mixed $value, Closure $fail) use ($alter) {
+                    if ($this->handles->isReservedWord($value)) {
+                        $fail('Ce handle est réservé.');
+
+                        return;
+                    }
+
+                    if (! $this->handles->isAvailableFor($value, $alter)) {
+                        // Même message qu'un handle pris : inutile de dire si
+                        // c'est une quarantaine ou un alter existant.
+                        $fail('Ce handle est déjà utilisé.');
+
+                        return;
+                    }
+
+                    if ($alter !== null
+                        && $this->handles->normalize($value) !== $alter->handle_key
+                        && ! $this->handles->canChangeHandle($alter)) {
+                        $fail(sprintf(
+                            'Changement possible à partir du %s : un handle ne change pas plus d\'une fois tous les %d jours.',
+                            $this->handles->nextChangeAllowedAt($alter)->format('d/m/Y'),
+                            Handles::COOLDOWN_DAYS,
+                        ));
+                    }
+                },
             ],
             'pronouns' => ['nullable', 'string', 'max:40'],
             'bio' => ['nullable', 'string', 'max:500'],

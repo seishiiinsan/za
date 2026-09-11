@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\PrivacyLevel;
 use App\Models\Concerns\HasPublicUuid;
+use App\Support\Handles;
 use Database\Factories\AlterFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,7 +33,19 @@ class Alter extends Model
         return [
             'privacy_level' => PrivacyLevel::class,
             'settings' => 'array',
+            'handle_changed_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // La forme canonique suit toujours le handle : c'est elle qui porte
+        // l'unicité en base.
+        static::saving(function (Alter $alter) {
+            if ($alter->isDirty('handle')) {
+                $alter->handle_key = app(Handles::class)->normalize($alter->handle);
+            }
+        });
     }
 
     /** @return BelongsTo<System, $this> */

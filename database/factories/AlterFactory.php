@@ -19,7 +19,10 @@ class AlterFactory extends Factory
         return [
             'system_id' => System::factory(),
             'name' => $name,
-            'handle' => Str::lower($name).fake()->unique()->numberBetween(100, 9999),
+            // Suffixe en lettres : les chiffres se confondent avec des lettres
+            // dans la forme canonique, deux handles générés pourraient entrer
+            // en collision.
+            'handle' => Str::lower($name).Str::lower(Str::random(8)),
             'pronouns' => fake()->randomElement(['iel', 'elle', 'il', 'ael']),
             'bio' => fake()->sentence(),
             'privacy_level' => PrivacyLevel::Public,
