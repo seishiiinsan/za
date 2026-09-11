@@ -24,14 +24,13 @@ class Handles
     public const COOLDOWN_DAYS = 30;
 
     /**
-     * Caractères qui se confondent à l'œil, ramenés à un seul par groupe.
+     * Chiffres qui se confondent avec des lettres, ramenés sur la lettre.
      *
-     * `1`, `l` et `i` se lisent pareil selon la police : les trois tombent sur
-     * la même forme canonique, sans quoi @ka1 passerait pour @kai.
+     * Seuls les chiffres sont normalisés : `l` et `i` restent deux lettres
+     * distinctes, sans quoi @lila et @iiia deviendraient le même handle.
      */
     protected const CONFUSABLES = [
-        '0' => 'o', '1' => 'i', 'l' => 'i',
-        '3' => 'e', '4' => 'a', '5' => 's', '7' => 't',
+        '0' => 'o', '1' => 'i', '3' => 'e', '4' => 'a', '5' => 's', '7' => 't',
     ];
 
     /** Noms de service : jamais attribués, pour éviter qu'on se fasse passer pour Za. */
