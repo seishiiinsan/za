@@ -14,8 +14,17 @@ class SystemFactory extends Factory
     {
         return [
             'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
             'password' => Hash::make('password'),
             'settings' => [],
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
         ];
+    }
+
+    public function unverified(): static
+    {
+        return $this->state(['email_verified_at' => null]);
     }
 }

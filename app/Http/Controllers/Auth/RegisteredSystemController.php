@@ -26,13 +26,15 @@ class RegisteredSystemController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        $system = System::create($data);
+        // `create()` ne rapporte que les colonnes écrites : on relit la ligne
+        // pour disposer de l'état complet (vérification, second facteur).
+        $system = System::create($data)->refresh();
 
         event(new Registered($system));
         Auth::login($system);
         $request->session()->regenerate();
 
-        return redirect()->route('alters.create')
-            ->with('status', 'Système créé. Crée un premier alter pour commencer.');
+        return redirect()->route('verification.notice')
+            ->with('status', 'Système créé. Vérifiez votre adresse pour ouvrir le reste du compte.');
     }
 }
