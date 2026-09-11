@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredSystemController;
+use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FrontController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -44,6 +45,17 @@ Route::middleware('auth')->group(function () {
     Route::delete('alters/{alter}', [AlterController::class, 'destroy'])->name('alters.destroy');
 
     Route::put('front', [FrontController::class, 'update'])->name('front.update');
+
+    // Tout ce qui écrit au nom d'un alter exige un front actif.
+    Route::middleware('front')->group(function () {
+        Route::post('alters/{alter}/follow', [FollowController::class, 'store'])->name('follows.store');
+        Route::delete('alters/{alter}/follow', [FollowController::class, 'destroy'])->name('follows.destroy');
+
+        Route::get('follows', [FollowController::class, 'connections'])->name('follows.index');
+        Route::get('follows/requests', [FollowController::class, 'requests'])->name('follows.requests');
+        Route::post('follows/requests/{alter}', [FollowController::class, 'approve'])->name('follows.approve');
+        Route::delete('follows/requests/{alter}', [FollowController::class, 'reject'])->name('follows.reject');
+    });
 });
 
 /*

@@ -1,8 +1,27 @@
 <script setup>
-import { Head } from '@inertiajs/vue3'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { computed } from 'vue'
 import AppLayout from '../../Layouts/AppLayout.vue'
 
-defineProps({ alter: { type: Object, required: true } })
+const props = defineProps({
+  alter: { type: Object, required: true },
+  isSelf: Boolean,
+  isFollowing: Boolean,
+  hasPendingRequest: Boolean,
+  connections: { type: Object, default: null },
+  counts: { type: Object, required: true },
+})
+
+const page = usePage()
+const canFollow = computed(() => page.props.auth.activeAlter && !props.isSelf)
+
+function follow() {
+  router.post(`/alters/${props.alter.id}/follow`, {}, { preserveScroll: true })
+}
+
+function unfollow() {
+  router.delete(`/alters/${props.alter.id}/follow`, { preserveScroll: true })
+}
 </script>
 
 <template>
@@ -15,7 +34,36 @@ defineProps({ alter: { type: Object, required: true } })
         <h1 class="text-lg font-semibold">{{ alter.name }}</h1>
         <p class="text-sm text-neutral-500">@{{ alter.handle }} <span v-if="alter.pronouns">· {{ alter.pronouns }}</span></p>
         <p v-if="alter.bio" class="mt-2 whitespace-pre-line text-sm text-neutral-300">{{ alter.bio }}</p>
+        <p class="mt-2 text-xs text-neutral-500">
+          {{ counts.followers }} followers · {{ counts.following }} abonnements
+        </p>
+      </div>
+      <div v-if="canFollow">
+        <button v-if="isFollowing" class="rounded-md border border-neutral-700 px-3 py-1.5 text-sm hover:border-red-500" @click="unfollow">
+          Se désabonner
+        </button>
+        <button v-else-if="hasPendingRequest" class="rounded-md border border-neutral-800 px-3 py-1.5 text-sm text-neutral-500" @click="unfollow">
+          Demande en attente
+        </button>
+        <button v-else class="rounded-md bg-violet-600 px-3 py-1.5 text-sm font-medium hover:bg-violet-500" @click="follow">
+          {{ alter.is_private ? 'Demander' : "S'abonner" }}
+        </button>
       </div>
     </header>
+
+    <section v-if="connections" class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <h2 class="mb-2 text-sm uppercase tracking-wide text-neutral-500">Followers</h2>
+        <Link v-for="a in connections.followers.data" :key="a.id" :href="`/@${a.handle}`" class="block text-sm text-neutral-300 hover:text-violet-400">
+          {{ a.name }} <span class="text-neutral-600">@{{ a.handle }}</span>
+        </Link>
+      </div>
+      <div>
+        <h2 class="mb-2 text-sm uppercase tracking-wide text-neutral-500">Abonnements</h2>
+        <Link v-for="a in connections.following.data" :key="a.id" :href="`/@${a.handle}`" class="block text-sm text-neutral-300 hover:text-violet-400">
+          {{ a.name }} <span class="text-neutral-600">@{{ a.handle }}</span>
+        </Link>
+      </div>
+    </section>
   </AppLayout>
 </template>

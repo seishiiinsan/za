@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\AlterResource;
 use App\Models\Alter;
+use App\Support\Front;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -13,12 +14,28 @@ use Inertia\Response;
  */
 class AlterProfileController extends Controller
 {
-    public function show(string $handle): Response
+    public function show(string $handle, Front $front): Response
     {
         $alter = Alter::query()->where('handle', $handle)->firstOrFail();
+        $viewer = $front->current();
 
         return Inertia::render('Profile/Show', [
             'alter' => new AlterResource($alter),
+            'isSelf' => $viewer?->is($alter) ?? false,
+            'isFollowing' => $alter->isFollowedBy($viewer),
+            'hasPendingRequest' => $alter->hasPendingRequestFrom($viewer),
+            'connections' => $alter->showsConnections() ? [
+                'followers' => AlterResource::collection(
+                    $alter->followers()->wherePivot('accepted', true)->orderBy('name')->get()
+                ),
+                'following' => AlterResource::collection(
+                    $alter->following()->wherePivot('accepted', true)->orderBy('name')->get()
+                ),
+            ] : null,
+            'counts' => [
+                'followers' => $alter->followers()->wherePivot('accepted', true)->count(),
+                'following' => $alter->following()->wherePivot('accepted', true)->count(),
+            ],
         ]);
     }
 }
