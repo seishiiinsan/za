@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredSystemController;
+use App\Http\Controllers\FrontController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -41,6 +42,8 @@ Route::middleware('auth')->group(function () {
     Route::get('alters/{alter}/edit', [AlterController::class, 'edit'])->name('alters.edit');
     Route::put('alters/{alter}', [AlterController::class, 'update'])->name('alters.update');
     Route::delete('alters/{alter}', [AlterController::class, 'destroy'])->name('alters.destroy');
+
+    Route::put('front', [FrontController::class, 'update'])->name('front.update');
 });
 
 /*

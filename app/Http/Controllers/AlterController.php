@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\PrivacyLevel;
 use App\Http\Resources\AlterResource;
 use App\Models\Alter;
+use App\Support\Front;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,6 +14,8 @@ use Inertia\Response;
 
 class AlterController extends Controller
 {
+    public function __construct(protected Front $front) {}
+
     public function index(Request $request): Response
     {
         return Inertia::render('Alters/Index', [
@@ -28,10 +31,15 @@ class AlterController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, Front $front): RedirectResponse
     {
         $data = $this->validated($request);
         $alter = $request->user()->alters()->create($this->withAvatar($request, $data));
+
+        // Premier alter : il devient le front actif immédiatement.
+        if ($front->current() === null) {
+            $front->set($alter);
+        }
 
         return redirect()->route('alters.index')->with('status', "Alter « {$alter->name} » créé.");
     }
@@ -63,7 +71,12 @@ class AlterController extends Controller
 
         // MVP : suppression dure (posts et follows partent en cascade).
         // La politique de rétention fine est traitée dans une issue dédiée.
+        if ($this->front->current()?->is($alter)) {
+            $this->front->clear();
+        }
+
         $alter->delete();
+        $this->front->ensure();
 
         return redirect()->route('alters.index')->with('status', 'Alter supprimé.');
     }

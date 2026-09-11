@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Alter;
 use App\Models\System;
+use App\Support\Front;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -26,6 +27,19 @@ class AlterTest extends TestCase
         }
 
         $this->assertCount(2, $system->alters()->get());
+    }
+
+    public function test_the_first_alter_becomes_the_active_front(): void
+    {
+        $system = System::factory()->create();
+
+        $this->actingAs($system)->post('/alters', [
+            'name' => 'Kai',
+            'handle' => 'kai',
+            'privacy_level' => 'public',
+        ]);
+
+        $this->assertSame($system->alters()->first()->getKey(), session(Front::SESSION_KEY));
     }
 
     public function test_an_avatar_can_be_uploaded(): void
@@ -59,7 +73,7 @@ class AlterTest extends TestCase
     {
         $alter = Alter::factory()->create();
 
-        $this->actingAs($alter->system)->delete("/alters/{$alter->id}")->assertRedirect('/alters');
+        $this->actingAsFront($alter)->delete("/alters/{$alter->id}")->assertRedirect('/alters');
 
         $this->assertDatabaseMissing('alters', ['id' => $alter->id]);
     }
