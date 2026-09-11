@@ -2,6 +2,12 @@
 
 namespace App\Support;
 
+use BaconQrCode\Renderer\Color\Rgb;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\Fill;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 use Illuminate\Support\Str;
 
 /**
@@ -43,6 +49,26 @@ class TwoFactor
             'digits' => self::DIGITS,
             'period' => self::PERIOD,
         ]);
+    }
+
+    /**
+     * QR code de l'URI, en SVG inline.
+     *
+     * Rendu côté serveur : le secret ne part pas vers un service tiers pour
+     * être mis en image.
+     */
+    public function qrCodeSvg(string $uri, int $size = 200): string
+    {
+        $writer = new Writer(new ImageRenderer(
+            new RendererStyle($size, 1, null, null, Fill::uniformColor(
+                new Rgb(10, 10, 10),      // fond, accordé au thème sombre
+                new Rgb(237, 233, 254),   // modules
+            )),
+            new SvgImageBackEnd,
+        ));
+
+        // Le prologue XML empêcherait l'insertion directe dans la page.
+        return trim(preg_replace('/<\?xml.*?\?>/', '', $writer->writeString($uri)) ?? '');
     }
 
     public function verify(string $secret, string $code, ?int $timestamp = null): bool

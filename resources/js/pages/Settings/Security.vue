@@ -7,6 +7,7 @@ defineProps({
   pending: Boolean,
   secret: { type: String, default: null },
   provisioningUri: { type: String, default: null },
+  qrCode: { type: String, default: null },
   recoveryCodes: { type: Array, default: null },
   verified: Boolean,
 })
@@ -45,13 +46,20 @@ const regenerate = useForm({})
       <section v-if="pending" class="space-y-3">
         <h2 class="text-sm uppercase tracking-wide text-neutral-500">Confirmer l'activation</h2>
         <p class="text-sm text-neutral-400">
-          Ajoutez ce secret dans votre application d'authentification, puis saisissez le code
+          Scannez ce QR code dans votre application d'authentification, puis saisissez le code
           qu'elle affiche.
         </p>
-        <code class="block break-all rounded-md border border-neutral-800 bg-neutral-950 p-3 text-xs text-violet-300">
-          {{ secret }}
-        </code>
-        <code class="block break-all text-xs text-neutral-600">{{ provisioningUri }}</code>
+
+        <!-- eslint-disable-next-line vue/no-v-html -- SVG produit par l'application -->
+        <div v-if="qrCode" class="w-fit rounded-md border border-neutral-800 bg-neutral-950 p-3" v-html="qrCode" />
+
+        <details class="text-xs text-neutral-500">
+          <summary class="cursor-pointer hover:text-neutral-300">Saisir le code à la main</summary>
+          <code class="mt-2 block break-all rounded-md border border-neutral-800 bg-neutral-950 p-3 text-violet-300">
+            {{ secret }}
+          </code>
+          <code class="mt-1 block break-all text-neutral-600">{{ provisioningUri }}</code>
+        </details>
 
         <form class="flex gap-2" @submit.prevent="confirm.post('/settings/security/two-factor/confirm')">
           <input

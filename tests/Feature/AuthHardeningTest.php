@@ -133,6 +133,32 @@ class AuthHardeningTest extends TestCase
         $this->assertTrue($system->fresh()->hasTwoFactorEnabled());
     }
 
+    public function test_the_setup_screen_serves_a_qr_code_and_a_manual_fallback(): void
+    {
+        $system = System::factory()->create();
+        $this->actingAs($system)->post('/settings/security/two-factor');
+
+        $this->actingAs($system)
+            ->get('/settings/security')
+            ->assertInertia(fn ($page) => $page
+                ->where('pending', true)
+                ->where('qrCode', fn ($svg) => str_starts_with($svg, '<svg'))
+                ->where('provisioningUri', fn ($uri) => str_starts_with($uri, 'otpauth://totp/'))
+                ->has('secret'));
+    }
+
+    public function test_the_qr_code_disappears_once_two_factor_is_confirmed(): void
+    {
+        $system = $this->systemWithTwoFactor();
+
+        $this->actingAs($system)
+            ->get('/settings/security')
+            ->assertInertia(fn ($page) => $page
+                ->where('enabled', true)
+                ->where('qrCode', null)
+                ->where('secret', null));
+    }
+
     public function test_a_password_alone_no_longer_opens_the_session(): void
     {
         $system = $this->systemWithTwoFactor();
