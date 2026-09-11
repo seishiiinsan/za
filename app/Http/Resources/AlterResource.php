@@ -28,6 +28,7 @@ class AlterResource extends JsonResource
                 'avatar_url' => null,
                 'privacy_level' => null,
                 'is_private' => true,
+                'color' => null,
                 'deleted' => true,
             ];
         }
@@ -41,6 +42,7 @@ class AlterResource extends JsonResource
             'avatar_url' => $this->avatar_path ? asset('storage/'.$this->avatar_path) : null,
             'privacy_level' => $this->privacy_level->value,
             'is_private' => ! $this->privacy_level->isOpen(),
+            'color' => $this->colorIndex(),
             'deleted' => false,
         ];
     }

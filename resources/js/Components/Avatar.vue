@@ -8,7 +8,12 @@ const props = defineProps({
   ring: { type: Boolean, default: false },
 })
 
-const gradient = computed(() => alterGradient(props.alter?.id))
+// Couleur choisie dans les réglages, sinon dérivée de l'identifiant public.
+const gradient = computed(() =>
+  alterGradient(props.alter?.color !== null && props.alter?.color !== undefined
+    ? String(props.alter.color)
+    : props.alter?.id)
+)
 
 const style = computed(() => ({
   width: `${props.size}px`,

@@ -48,7 +48,7 @@ const regenerate = useForm({})
         </p>
 
         <!-- eslint-disable-next-line vue/no-v-html -- SVG produit par l'application -->
-        <div v-if="qrCode" class="w-fit rounded-2xl bg-white p-3" v-html="qrCode" />
+        <div v-if="qrCode" class="w-fit rounded-2xl bg-[#f7efe8] p-3 shadow-[0_14px_30px_rgba(0,0,0,0.35)]" v-html="qrCode" />
 
         <details class="text-xs text-faint">
           <summary class="cursor-pointer transition hover:text-muted">Saisir le code à la main</summary>

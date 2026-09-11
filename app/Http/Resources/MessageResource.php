@@ -28,6 +28,7 @@ class MessageResource extends JsonResource
             'content' => $this->content,
             'created_at' => $this->created_at?->toIso8601String(),
             'author_name' => $this->author->displayName(),
+            'author_correspondent_id' => $this->author_correspondent_id,
             'author_alter' => $this->showsAuthor && $this->authorAlter
                 ? (new AlterResource($this->authorAlter))->resolve()
                 : null,

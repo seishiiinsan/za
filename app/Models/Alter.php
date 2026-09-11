@@ -131,6 +131,14 @@ class Alter extends Model
         return $this->hasMany(AlterNotification::class)->latest('id');
     }
 
+    /** Index de couleur choisi dans les réglages, ou null pour la couleur dérivée. */
+    public function colorIndex(): ?int
+    {
+        $index = $this->settings['color'] ?? null;
+
+        return $index === null ? null : (int) $index;
+    }
+
     /** Les notifications de cet alter remontent-elles au dashboard système ? */
     public function notifiesSystem(): bool
     {

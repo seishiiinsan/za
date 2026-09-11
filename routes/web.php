@@ -23,6 +23,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostInvitationController;
 use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -88,6 +89,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::put('front', [FrontController::class, 'update'])->name('front.update');
 
+    Route::get('settings', [SettingsController::class, 'index'])->name('settings');
     Route::get('settings/messaging', [MessagingSettingsController::class, 'edit'])->name('settings.messaging');
     Route::put('settings/messaging', [MessagingSettingsController::class, 'update'])->name('settings.messaging.update');
 
@@ -119,6 +121,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
         Route::post('notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
+        Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+        Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
         Route::get('blocks', [BlockController::class, 'index'])->name('blocks.index');
         Route::post('alters/{alter}/block', [BlockController::class, 'store'])->name('blocks.store');

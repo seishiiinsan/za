@@ -71,6 +71,7 @@ class AlterController extends Controller
                 'show_connections' => $alter->showsConnections(),
                 'notify_system' => $alter->notifiesSystem(),
                 'delegate_to' => $alter->delegate()?->uuid,
+                'color' => $alter->colorIndex(),
             ],
             'siblings' => AlterResource::collection(
                 $request->user()->alters()->whereKeyNot($alter->getKey())->orderBy('name')->get()
@@ -193,6 +194,7 @@ class AlterController extends Controller
             'avatar' => ['nullable', 'image', 'max:2048'],
             'show_connections' => ['boolean'],
             'notify_system' => ['boolean'],
+            'color' => ['nullable', 'integer', 'min:0', 'max:5'],
             'delegate_to' => ['nullable', 'uuid'],
         ]);
     }
@@ -211,12 +213,13 @@ class AlterController extends Controller
         $data['settings'] = [
             'show_connections' => (bool) ($data['show_connections'] ?? false),
             'notify_system' => (bool) ($data['notify_system'] ?? false),
+            'color' => $data['color'] ?? null,
             // La délégation ne vaut qu'entre alters d'un même système : elle
             // reste privée et ne crée aucun lien public.
             'delegate_to' => $this->delegateUuid($request, $data['delegate_to'] ?? null),
         ];
 
-        unset($data['avatar'], $data['show_connections'], $data['notify_system'], $data['delegate_to']);
+        unset($data['avatar'], $data['show_connections'], $data['notify_system'], $data['delegate_to'], $data['color']);
 
         return $data;
     }

@@ -464,6 +464,25 @@ php artisan migrate --seed        # jeu de démo
 php artisan storage:link          # sert les avatars depuis public/
 ```
 
+### Jeu d'essai de démonstration
+
+Le seeder par défaut crée un compte et trois alters, de quoi cliquer. Pour une
+application peuplée — utile pour juger les écrans pleins et repérer ce qui ne tient pas
+à l'échelle :
+
+```bash
+php artisan migrate:fresh
+php artisan db:seed --class=DemoSeeder    # environ 6 000 enregistrements, ~15 s
+```
+
+60 systèmes, 200 alters, 780 abonnements, 930 posts (dont des co-écritures encore en
+attente), 450 commentaires, 1 000 réactions, 110 conversations et leurs messages, 300
+notifications, quelques blocages. Les textes sont écrits (`database/seeders/DemoContent.php`)
+et composés, jamais remplis de faux latin. Les relations tiennent : on ne suit que des alters
+d'autres systèmes, un alter en lecture seule ne publie pas, un commentaire arrive après son
+post, un fil se lit dans l'ordre. `system@za.test` / `password` ouvre sur un feed plein.
+`tests/Feature/DemoSeederTest.php` vérifie ces règles.
+
 ### Lancer
 
 Deux terminaux, ou `npm run build` une fois si le front ne change pas :
