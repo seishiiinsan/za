@@ -344,6 +344,18 @@ php vendor/bin/phpunit tests/Feature/AntiCorrelationTest.php   # invariant, bloq
 | Grades public / privé | `app/Enums/PrivacyLevel.php`, `Alter::isVisibleTo()` |
 | Invariant anti-corrélation | `app/Http/Resources/AlterResource.php`, `tests/Feature/AntiCorrelationTest.php` |
 
+### Ce que couvre la v2
+
+| Périmètre | Où |
+|---|---|
+| Co-posts / cross-posts + invitations | `PostController`, `PostInvitationController` |
+| Likes et commentaires | `ReactionController`, `CommentController`, `app/Models/Comment.php` |
+| Grades non-listé / lecture | `app/Enums/PrivacyLevel.php` |
+| Blocage alter / compte | `app/Support/BlockList.php`, `BlockController` |
+| Messagerie, correspondant polymorphe, mode partagé | `app/Support/Messaging.php`, `ConversationController` |
+| Migration de mode (split / merge, seuil Xh) | `app/Support/MessagingModeMigration.php` |
+| Notifications par alter, remontée système, délégation | `app/Support/Notifier.php`, `NotificationController` |
+
 ### Écarts assumés
 
 - **Chiffrement de `system_id` au repos** : non fait. Chiffrer la clé étrangère casserait
@@ -353,4 +365,10 @@ php vendor/bin/phpunit tests/Feature/AntiCorrelationTest.php   # invariant, bloq
   (volume/colonne chiffrée) dans l'issue Sécurité.
 - **Suppression d'alter** : cascade dure (posts et follows partent avec). La politique de
   rétention fine fait l'objet d'une issue dédiée.
-- **Grades non-listé / lecture, messagerie, co-posts, blocage, notifications** : v2.
+- **Grade `lecture`** : le cahier des charges ne parle que des réactions. L'implémentation
+  bloque aussi la publication et l'invitation comme co-auteur, au nom du libellé. À
+  confirmer, c'est une interprétation.
+- **Migration de mode (split)** : l'attribution des messages entrants reste une heuristique.
+  Les cas ambigus dupliquent, les cas insolubles conservent le message hors conversation.
+  La capture de l'alter à la réception reste la bonne réponse à terme (issue dédiée).
+- **Modération, RGPD-santé, chiffrement au repos** : toujours ouverts (issues dédiées).
