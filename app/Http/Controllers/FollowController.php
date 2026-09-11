@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\AlterResource;
 use App\Models\Alter;
+use App\Support\BlockList;
 use App\Support\Front;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -15,13 +16,14 @@ use Inertia\Response;
  */
 class FollowController extends Controller
 {
-    public function __construct(protected Front $front) {}
+    public function __construct(protected Front $front, protected BlockList $blocks) {}
 
     public function store(Alter $alter): RedirectResponse
     {
         $follower = $this->front->currentOrFail();
 
         abort_if($follower->is($alter), 422, 'Un alter ne peut pas se suivre lui-même.');
+        abort_if($this->blocks->blocks($follower, $alter), 404);
 
         $accepted = ! $alter->requiresFollowApproval();
 

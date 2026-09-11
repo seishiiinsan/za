@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Support\BlockList;
 use App\Support\Front;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Vite;
@@ -13,6 +14,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Un front actif par requête.
         $this->app->scoped(Front::class);
+        $this->app->scoped(BlockList::class);
     }
 
     public function boot(): void

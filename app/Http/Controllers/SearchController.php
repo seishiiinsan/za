@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\AlterResource;
 use App\Models\Alter;
+use App\Support\BlockList;
+use App\Support\Front;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,14 +16,16 @@ use Inertia\Response;
  */
 class SearchController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, Front $front, BlockList $blocks): Response
     {
         $term = trim((string) $request->query('q', ''));
+        $hidden = $blocks->hiddenFrom($front->current());
 
         $results = $term === '' ? collect() : Alter::query()
             ->searchable()
             ->where(fn ($query) => $query->where('name', 'like', "%{$term}%")
                 ->orWhere('handle', 'like', "%{$term}%"))
+            ->whereKeyNot($hidden->all())
             ->orderBy('name')
             ->limit(25)
             ->get();

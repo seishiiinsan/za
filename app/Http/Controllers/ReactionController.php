@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Support\BlockList;
 use App\Support\Front;
 use Illuminate\Http\RedirectResponse;
 
@@ -12,7 +13,7 @@ use Illuminate\Http\RedirectResponse;
  */
 class ReactionController extends Controller
 {
-    public function __construct(protected Front $front) {}
+    public function __construct(protected Front $front, protected BlockList $blocks) {}
 
     public function store(Post $post): RedirectResponse
     {
@@ -20,6 +21,7 @@ class ReactionController extends Controller
 
         abort_unless($alter->canReact(), 403, 'Ce grade de confidentialité ne permet pas de réagir.');
         abort_unless($post->isVisibleTo($alter), 404);
+        abort_if($post->authors->contains(fn ($author) => $this->blocks->blocks($alter, $author)), 404);
 
         $post->reactions()->syncWithoutDetaching([$alter->getKey()]);
 
