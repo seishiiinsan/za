@@ -21,9 +21,9 @@ class FrontSwitchTest extends TestCase
         ];
 
         $this->actingAsFront($kai)
-            ->from('/alters')
+            ->from('/feed')
             ->put('/front', ['alter_id' => $nori->id])
-            ->assertRedirect('/alters');
+            ->assertRedirect('/feed');
 
         $this->assertAuthenticatedAs($system);
         $this->assertSame($nori->getKey(), session(Front::SESSION_KEY));
@@ -37,5 +37,16 @@ class FrontSwitchTest extends TestCase
         $this->actingAsFront($mine)
             ->put('/front', ['alter_id' => $theirs->id])
             ->assertNotFound();
+    }
+
+    public function test_writing_without_an_active_front_is_refused(): void
+    {
+        $system = System::factory()->create();
+
+        $this->actingAs($system)
+            ->post('/posts', ['content' => 'Coucou'])
+            ->assertRedirect('/alters/create');
+
+        $this->assertDatabaseCount('posts', 0);
     }
 }

@@ -6,8 +6,10 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredSystemController;
+use App\Http\Controllers\FeedController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FrontController;
+use App\Http\Controllers\PostController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -48,6 +50,12 @@ Route::middleware('auth')->group(function () {
 
     // Tout ce qui écrit au nom d'un alter exige un front actif.
     Route::middleware('front')->group(function () {
+        Route::get('feed', [FeedController::class, 'index'])->name('feed');
+
+        Route::post('posts', [PostController::class, 'store'])->name('posts.store');
+        Route::put('posts/{post}', [PostController::class, 'update'])->name('posts.update');
+        Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
+
         Route::post('alters/{alter}/follow', [FollowController::class, 'store'])->name('follows.store');
         Route::delete('alters/{alter}/follow', [FollowController::class, 'destroy'])->name('follows.destroy');
 

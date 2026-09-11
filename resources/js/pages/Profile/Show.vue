@@ -2,12 +2,14 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import AppLayout from '../../Layouts/AppLayout.vue'
+import PostCard from '../../Components/PostCard.vue'
 
 const props = defineProps({
   alter: { type: Object, required: true },
   isSelf: Boolean,
   isFollowing: Boolean,
   hasPendingRequest: Boolean,
+  posts: { type: Object, required: true },
   connections: { type: Object, default: null },
   counts: { type: Object, required: true },
 })
@@ -50,6 +52,11 @@ function unfollow() {
         </button>
       </div>
     </header>
+
+    <div class="space-y-3">
+      <PostCard v-for="post in posts.data" :key="post.id" :post="post" :owned="isSelf" />
+    </div>
+    <p v-if="!posts.data.length" class="text-sm text-neutral-500">Aucun post.</p>
 
     <section v-if="connections" class="grid gap-4 sm:grid-cols-2">
       <div>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\AlterResource;
+use App\Http\Resources\PostResource;
 use App\Models\Alter;
 use App\Support\Front;
 use Inertia\Inertia;
@@ -19,8 +20,16 @@ class AlterProfileController extends Controller
         $alter = Alter::query()->where('handle', $handle)->firstOrFail();
         $viewer = $front->current();
 
+        $posts = $alter->posts()->wherePivot('accepted', true)
+            ->where('posts.status', 'published')
+            ->with('authors')
+            ->latest('posts.id')
+            ->paginate(20)
+            ->withQueryString();
+
         return Inertia::render('Profile/Show', [
             'alter' => new AlterResource($alter),
+            'posts' => PostResource::collection($posts),
             'isSelf' => $viewer?->is($alter) ?? false,
             'isFollowing' => $alter->isFollowedBy($viewer),
             'hasPendingRequest' => $alter->hasPendingRequestFrom($viewer),

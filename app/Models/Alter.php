@@ -37,6 +37,14 @@ class Alter extends Model
         return $this->belongsTo(System::class);
     }
 
+    /** @return BelongsToMany<Post, $this> */
+    public function posts(): BelongsToMany
+    {
+        return $this->belongsToMany(Post::class, 'post_authors')
+            ->withPivot('accepted')
+            ->withTimestamps();
+    }
+
     /** Alters suivis par cet alter. @return BelongsToMany<Alter, $this> */
     public function following(): BelongsToMany
     {
