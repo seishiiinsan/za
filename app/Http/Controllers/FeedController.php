@@ -19,7 +19,8 @@ class FeedController extends Controller
 
         $posts = Post::query()
             ->published()
-            ->with('authors')
+            ->with(['authors', 'comments.author'])
+            ->withViewerContext($alter)
             ->whereHas('authors', fn ($query) => $query->whereIn('alters.id', $followedIds))
             ->latest('id')
             ->paginate(20)

@@ -22,7 +22,8 @@ class DashboardController extends Controller
         $alterIds = $alters->pluck('id');
 
         $posts = Post::query()
-            ->with('authors')
+            ->with(['authors', 'comments.author'])
+            ->withViewerContext($request->user()->alters()->first())
             ->whereHas('authors', fn ($query) => $query->whereIn('alters.id', $alterIds))
             ->latest('id')
             ->paginate(20)

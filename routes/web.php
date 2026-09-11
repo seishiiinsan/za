@@ -6,12 +6,14 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredSystemController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FrontController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostInvitationController;
+use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -61,6 +63,12 @@ Route::middleware('auth')->group(function () {
         Route::post('posts', [PostController::class, 'store'])->name('posts.store');
         Route::put('posts/{post}', [PostController::class, 'update'])->name('posts.update');
         Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
+
+        Route::post('posts/{post}/reaction', [ReactionController::class, 'store'])->name('reactions.store');
+        Route::delete('posts/{post}/reaction', [ReactionController::class, 'destroy'])->name('reactions.destroy');
+
+        Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
+        Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 
         Route::get('posts/invitations', [PostInvitationController::class, 'index'])->name('posts.invitations');
         Route::post('posts/{post}/invitation', [PostInvitationController::class, 'accept'])->name('posts.invitation.accept');

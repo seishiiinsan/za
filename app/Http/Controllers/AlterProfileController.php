@@ -28,7 +28,8 @@ class AlterProfileController extends Controller
         $posts = $visible
             ? $alter->posts()->wherePivot('accepted', true)
                 ->where('posts.status', 'published')
-                ->with('authors')
+                ->with(['authors', 'comments.author'])
+                ->withViewerContext($viewer)
                 ->latest('posts.id')
                 ->paginate(20)
                 ->withQueryString()

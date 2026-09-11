@@ -18,6 +18,10 @@ class PostResource extends JsonResource
             'status' => $this->status,
             'created_at' => $this->created_at?->toIso8601String(),
             'authors' => AlterResource::collection($this->whenLoaded('authors')),
+            'reactions_count' => $this->reactions_count ?? $this->reactions()->count(),
+            'reacted' => (bool) ($this->reacted ?? false),
+            'comments' => CommentResource::collection($this->whenLoaded('comments')),
+            'comments_count' => $this->comments_count ?? $this->comments()->count(),
         ];
     }
 }
