@@ -39,6 +39,19 @@ class HandlePolicyTest extends TestCase
         }
     }
 
+    public function test_two_distinct_letters_stay_distinct(): void
+    {
+        Alter::factory()->create(['handle' => 'lila']);
+        $system = System::factory()->create();
+
+        // `l` et `i` sont deux lettres : seuls les chiffres sont normalisés.
+        $this->actingAs($system)
+            ->post('/alters', ['name' => 'Iiia', 'handle' => 'iiia', 'privacy_level' => 'public'])
+            ->assertRedirect('/alters');
+
+        $this->assertSame('iiia', $system->alters()->sole()->handle);
+    }
+
     public function test_a_handle_changes_once_a_month(): void
     {
         $alter = Alter::factory()->create(['handle' => 'kai']);

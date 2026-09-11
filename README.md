@@ -364,9 +364,10 @@ juste après avoir été libéré, servent à se faire passer pour quelqu'un aup
 
 - **Forme** : 3 à 30 caractères, minuscules, chiffres et `_`. Mots de service réservés
   (admin, support, securite…).
-- **Unicité** sur une forme canonique : casse ignorée, `_` retirés, caractères sosies ramenés
-  à un seul (`1`, `l`, `i` → `i` ; `0` → `o` ; `3` → `e` ; `4` → `a` ; `5` → `s` ; `7` → `t`).
-  `@ka1nu1t` ne peut donc pas cohabiter avec `@kai_nuit`.
+- **Unicité** sur une forme canonique : casse ignorée, `_` retirés, chiffres sosies ramenés
+  sur leur lettre (`0` → `o`, `1` → `i`, `3` → `e`, `4` → `a`, `5` → `s`, `7` → `t`).
+  `@ka1nu1t` ne peut donc pas cohabiter avec `@kai_nuit`. Les lettres restent distinctes
+  entre elles : `@lila` et `@iiia` sont deux handles différents.
 - **Changement** : une fois tous les 30 jours. L'ancien handle part en quarantaine pour la
   même durée — son propriétaire peut le reprendre, personne d'autre.
 - **Suppression** : le handle est libéré immédiatement. L'original est mémorisé ; à la
