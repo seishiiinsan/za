@@ -8,10 +8,13 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredSystemController;
 use App\Http\Controllers\BlockController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FrontController;
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\MessagingSettingsController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostInvitationController;
 use App\Http\Controllers\ReactionController;
@@ -57,6 +60,9 @@ Route::middleware('auth')->group(function () {
 
     Route::put('front', [FrontController::class, 'update'])->name('front.update');
 
+    Route::get('settings/messaging', [MessagingSettingsController::class, 'edit'])->name('settings.messaging');
+    Route::put('settings/messaging', [MessagingSettingsController::class, 'update'])->name('settings.messaging.update');
+
     // Tout ce qui écrit au nom d'un alter exige un front actif.
     Route::middleware('front')->group(function () {
         Route::get('feed', [FeedController::class, 'index'])->name('feed');
@@ -77,6 +83,11 @@ Route::middleware('auth')->group(function () {
 
         Route::post('alters/{alter}/follow', [FollowController::class, 'store'])->name('follows.store');
         Route::delete('alters/{alter}/follow', [FollowController::class, 'destroy'])->name('follows.destroy');
+
+        Route::get('conversations', [ConversationController::class, 'index'])->name('conversations.index');
+        Route::post('conversations', [ConversationController::class, 'store'])->name('conversations.store');
+        Route::get('conversations/{conversation}', [ConversationController::class, 'show'])->name('conversations.show');
+        Route::post('conversations/{conversation}/messages', [MessageController::class, 'store'])->name('messages.store');
 
         Route::get('blocks', [BlockController::class, 'index'])->name('blocks.index');
         Route::post('alters/{alter}/block', [BlockController::class, 'store'])->name('blocks.store');
