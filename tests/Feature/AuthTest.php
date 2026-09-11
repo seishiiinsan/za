@@ -21,7 +21,7 @@ class AuthTest extends TestCase
             'password_confirmation' => 'motdepasse-solide',
         ]);
 
-        $response->assertRedirect('/alters/create');
+        $response->assertRedirect('/verify-email');
         $this->assertAuthenticated();
         $this->assertDatabaseHas('systems', ['email' => 'kai@za.test']);
     }

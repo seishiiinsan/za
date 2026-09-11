@@ -16,6 +16,7 @@ const links = [
   { href: '/conversations', label: 'Messages' },
   { href: '/notifications', label: 'Notifications' },
   { href: '/blocks', label: 'Blocages' },
+  { href: '/settings/security', label: 'Sécurité' },
   { href: '/search', label: 'Recherche' },
 ]
 

@@ -356,6 +356,16 @@ php vendor/bin/phpunit tests/Feature/AntiCorrelationTest.php   # invariant, bloq
 | Migration de mode (split / merge, seuil Xh) | `app/Support/MessagingModeMigration.php` |
 | Notifications par alter, remontée système, délégation | `app/Support/Notifier.php`, `NotificationController` |
 
+### Durcissement de l'authentification
+
+- Vérification d'adresse obligatoire : un système non vérifié n'atteint que l'écran de
+  vérification et ses réglages de sécurité.
+- Limitation des tentatives de connexion par couple e-mail + IP (5 par minute), plus
+  l'inscription, la réinitialisation, le challenge et la confirmation du second facteur.
+- Double authentification TOTP (RFC 6238, implémentée dans `app/Support/TwoFactor.php`),
+  confirmée avant activation, avec codes de secours à usage unique. Secret et codes chiffrés
+  en base ; désactivation protégée par le mot de passe.
+
 ### Écarts assumés
 
 - **Chiffrement de `system_id` au repos** : traité au niveau du volume, à l'hébergement, et
@@ -374,3 +384,5 @@ php vendor/bin/phpunit tests/Feature/AntiCorrelationTest.php   # invariant, bloq
   Les cas ambigus dupliquent, les cas insolubles conservent le message hors conversation.
   La capture de l'alter à la réception reste la bonne réponse à terme (issue dédiée).
 - **Modération, RGPD-santé, chiffrement au repos** : toujours ouverts (issues dédiées).
+- **2FA sans QR code** : la page affiche le secret et l'URI `otpauth://` à coller dans
+  l'application d'authentification. Un rendu QR demanderait une dépendance de plus.

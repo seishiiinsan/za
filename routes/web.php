@@ -3,9 +3,12 @@
 use App\Http\Controllers\AlterController;
 use App\Http\Controllers\AlterProfileController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredSystemController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
+use App\Http\Controllers\Auth\TwoFactorSettingsController;
 use App\Http\Controllers\BlockController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ConversationController;
@@ -30,25 +33,49 @@ Route::get('/', fn () => Inertia::render('Welcome'))->name('home');
  */
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredSystemController::class, 'create'])->name('register');
-    Route::post('register', [RegisteredSystemController::class, 'store']);
+    Route::post('register', [RegisteredSystemController::class, 'store'])->middleware('throttle:5,1');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
-    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware('throttle:5,1')->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
-    Route::post('reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+    Route::post('reset-password', [NewPasswordController::class, 'store'])
+        ->middleware('throttle:5,1')->name('password.store');
+
+    // Second facteur : la session est encore anonyme à ce stade.
+    Route::get('two-factor-challenge', [TwoFactorChallengeController::class, 'create'])->name('two-factor.challenge');
+    Route::post('two-factor-challenge', [TwoFactorChallengeController::class, 'store'])->middleware('throttle:10,1');
 });
 
 Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
     ->middleware('auth')->name('logout');
 
+Route::middleware('auth')->group(function () {
+    Route::get('verify-email', [EmailVerificationController::class, 'notice'])->name('verification.notice');
+    Route::get('verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+    Route::post('verify-email/send', [EmailVerificationController::class, 'send'])
+        ->middleware('throttle:6,1')->name('verification.send');
+
+    // Réglages de sécurité : accessibles avant vérification, pour ne pas
+    // enfermer un système qui veut d'abord protéger son compte.
+    Route::get('settings/security', [TwoFactorSettingsController::class, 'edit'])->name('settings.security');
+    Route::post('settings/security/two-factor', [TwoFactorSettingsController::class, 'store'])->name('two-factor.store');
+    Route::post('settings/security/two-factor/confirm', [TwoFactorSettingsController::class, 'confirm'])
+        ->middleware('throttle:10,1')->name('two-factor.confirm');
+    Route::post('settings/security/two-factor/recovery-codes', [TwoFactorSettingsController::class, 'recoveryCodes'])
+        ->name('two-factor.recovery-codes');
+    Route::delete('settings/security/two-factor', [TwoFactorSettingsController::class, 'destroy'])->name('two-factor.destroy');
+});
+
 /*
  * Espace système authentifié : gestion des alters.
  */
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('alters', [AlterController::class, 'index'])->name('alters.index');

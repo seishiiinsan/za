@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
     {
         $system = System::factory()->create([
             'email' => 'system@za.test',
+            'email_verified_at' => now(),
             'password' => Hash::make('password'),
         ]);
 
