@@ -364,7 +364,8 @@ php vendor/bin/phpunit tests/Feature/AntiCorrelationTest.php   # invariant, bloq
   l'inscription, la réinitialisation, le challenge et la confirmation du second facteur.
 - Double authentification TOTP (RFC 6238, implémentée dans `app/Support/TwoFactor.php`),
   confirmée avant activation, avec codes de secours à usage unique. Secret et codes chiffrés
-  en base ; désactivation protégée par le mot de passe.
+  en base ; désactivation protégée par le mot de passe. Le QR code est rendu en SVG côté
+  serveur (`bacon/bacon-qr-code`), avec saisie manuelle du secret en repli.
 
 ### Écarts assumés
 
@@ -384,5 +385,3 @@ php vendor/bin/phpunit tests/Feature/AntiCorrelationTest.php   # invariant, bloq
   Les cas ambigus dupliquent, les cas insolubles conservent le message hors conversation.
   La capture de l'alter à la réception reste la bonne réponse à terme (issue dédiée).
 - **Modération, RGPD-santé, chiffrement au repos** : toujours ouverts (issues dédiées).
-- **2FA sans QR code** : la page affiche le secret et l'URI `otpauth://` à coller dans
-  l'application d'authentification. Un rendu QR demanderait une dépendance de plus.

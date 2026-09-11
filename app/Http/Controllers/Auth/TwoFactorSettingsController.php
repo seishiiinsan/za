@@ -18,14 +18,16 @@ class TwoFactorSettingsController extends Controller
     public function edit(Request $request): Response
     {
         $system = $request->user();
+        $uri = $system->two_factor_secret === null || $system->hasTwoFactorEnabled()
+            ? null
+            : $this->totp->provisioningUri($system->two_factor_secret, $system->email, config('app.name'));
 
         return Inertia::render('Settings/Security', [
             'enabled' => $system->hasTwoFactorEnabled(),
             'pending' => $system->two_factor_secret !== null && ! $system->hasTwoFactorEnabled(),
             'secret' => $system->hasTwoFactorEnabled() ? null : $system->two_factor_secret,
-            'provisioningUri' => $system->two_factor_secret === null || $system->hasTwoFactorEnabled()
-                ? null
-                : $this->totp->provisioningUri($system->two_factor_secret, $system->email, config('app.name')),
+            'provisioningUri' => $uri,
+            'qrCode' => $uri === null ? null : $this->totp->qrCodeSvg($uri),
             'recoveryCodes' => $system->hasTwoFactorEnabled() ? $system->two_factor_recovery_codes : null,
             'verified' => $system->hasVerifiedEmail(),
         ]);
