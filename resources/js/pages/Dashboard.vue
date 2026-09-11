@@ -7,6 +7,7 @@ defineProps({
   alters: { type: Object, required: true },
   posts: { type: Object, required: true },
   pendingRequests: { type: Number, default: 0 },
+  pendingInvitations: { type: Number, default: 0 },
 })
 </script>
 
@@ -27,6 +28,11 @@ defineProps({
           {{ alter.name }}
         </Link>
       </div>
+
+      <p v-if="pendingInvitations" class="mt-3 text-sm text-violet-300">
+        {{ pendingInvitations }} invitation(s) de co-écriture —
+        <Link href="/posts/invitations" class="underline">traiter</Link>
+      </p>
 
       <p v-if="pendingRequests" class="mt-3 text-sm text-violet-300">
         {{ pendingRequests }} demande(s) d'abonnement en attente —

@@ -12,6 +12,7 @@ const links = [
   { href: '/feed', label: 'Feed' },
   { href: '/alters', label: 'Alters' },
   { href: '/follows', label: 'Abonnements' },
+  { href: '/posts/invitations', label: 'Invitations' },
   { href: '/search', label: 'Recherche' },
 ]
 

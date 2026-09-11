@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Alter;
 use App\Models\Post;
 use App\Support\Front;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class PostController extends Controller
 {
@@ -15,19 +17,29 @@ class PostController extends Controller
     {
         $data = $request->validate([
             'content' => ['required', 'string', 'max:2000'],
+            'co_authors' => ['array', 'max:9'],
+            'co_authors.*' => ['uuid'],
         ]);
 
         $alter = $this->front->currentOrFail();
+        $invited = $this->invitedAuthors($data['co_authors'] ?? [], $alter);
 
-        $post = Post::create([
-            'content' => $data['content'],
-            'status' => Post::STATUS_PUBLISHED,
-        ]);
+        $post = Post::create(['content' => $data['content']]);
 
-        // MVP : post solo => exactement une ligne dans le pivot, déjà acceptée.
+        // L'auteur qui écrit accepte de fait ; chaque invité doit consentir.
+        // Co-front (même système) et cross-post (systèmes différents) suivent
+        // exactement le même chemin : aucune règle spéciale même-système.
         $post->authors()->attach($alter->getKey(), ['accepted' => true]);
 
-        return back()->with('status', 'Post publié.');
+        foreach ($invited as $coAuthor) {
+            $post->authors()->attach($coAuthor->getKey(), ['accepted' => false]);
+        }
+
+        $post->syncStatus();
+
+        return back()->with('status', $invited->isEmpty()
+            ? 'Post publié.'
+            : 'Post en attente : il sera publié quand tous les auteurs auront accepté.');
     }
 
     public function update(Request $request, Post $post): RedirectResponse
@@ -50,6 +62,20 @@ class PostController extends Controller
         $post->delete();
 
         return back()->with('status', 'Post supprimé.');
+    }
+
+    /**
+     * Les alters invités comme co-auteurs, hors auteur courant et hors doublons.
+     *
+     * @param  array<int, string>  $uuids
+     * @return Collection<int, Alter>
+     */
+    protected function invitedAuthors(array $uuids, Alter $author)
+    {
+        return Alter::query()
+            ->whereIn('uuid', array_unique($uuids))
+            ->whereKeyNot($author->getKey())
+            ->get();
     }
 
     /** Un post n'est éditable que par un de ses auteurs, et depuis le bon système. */

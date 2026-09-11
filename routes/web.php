@@ -11,6 +11,7 @@ use App\Http\Controllers\FeedController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FrontController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\PostInvitationController;
 use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -61,6 +62,10 @@ Route::middleware('auth')->group(function () {
         Route::put('posts/{post}', [PostController::class, 'update'])->name('posts.update');
         Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
 
+        Route::get('posts/invitations', [PostInvitationController::class, 'index'])->name('posts.invitations');
+        Route::post('posts/{post}/invitation', [PostInvitationController::class, 'accept'])->name('posts.invitation.accept');
+        Route::delete('posts/{post}/invitation', [PostInvitationController::class, 'decline'])->name('posts.invitation.decline');
+
         Route::post('alters/{alter}/follow', [FollowController::class, 'store'])->name('follows.store');
         Route::delete('alters/{alter}/follow', [FollowController::class, 'destroy'])->name('follows.destroy');
 
@@ -75,4 +80,5 @@ Route::middleware('auth')->group(function () {
  * Surfaces publiques : uniquement des alters, jamais de système.
  */
 Route::get('search', [SearchController::class, 'index'])->name('search');
+Route::get('api/alters/{handle}', [AlterProfileController::class, 'lookup'])->name('alters.lookup');
 Route::get('@{handle}', [AlterProfileController::class, 'show'])->name('alters.show');
