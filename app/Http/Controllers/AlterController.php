@@ -27,10 +27,11 @@ class AlterController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         return Inertia::render('Alters/Form', [
             'alter' => null,
+            'siblings' => AlterResource::collection($request->user()->alters()->orderBy('name')->get()),
             'privacyLevels' => $this->privacyLevels(),
         ]);
     }
@@ -55,7 +56,12 @@ class AlterController extends Controller
         return Inertia::render('Alters/Form', [
             'alter' => (new AlterResource($alter))->resolve() + [
                 'show_connections' => $alter->showsConnections(),
+                'notify_system' => $alter->notifiesSystem(),
+                'delegate_to' => $alter->delegate()?->uuid,
             ],
+            'siblings' => AlterResource::collection(
+                $request->user()->alters()->whereKeyNot($alter->getKey())->orderBy('name')->get()
+            ),
             'privacyLevels' => $this->privacyLevels(),
         ]);
     }
@@ -115,6 +121,8 @@ class AlterController extends Controller
             'privacy_level' => ['required', Rule::enum(PrivacyLevel::class)],
             'avatar' => ['nullable', 'image', 'max:2048'],
             'show_connections' => ['boolean'],
+            'notify_system' => ['boolean'],
+            'delegate_to' => ['nullable', 'uuid'],
         ]);
     }
 
@@ -129,11 +137,27 @@ class AlterController extends Controller
         }
 
         // Listes followers/abonnements masquées par défaut (anti-corrélation par graphe).
-        $data['settings'] = ['show_connections' => (bool) ($data['show_connections'] ?? false)];
+        $data['settings'] = [
+            'show_connections' => (bool) ($data['show_connections'] ?? false),
+            'notify_system' => (bool) ($data['notify_system'] ?? false),
+            // La délégation ne vaut qu'entre alters d'un même système : elle
+            // reste privée et ne crée aucun lien public.
+            'delegate_to' => $this->delegateUuid($request, $data['delegate_to'] ?? null),
+        ];
 
-        unset($data['avatar'], $data['show_connections']);
+        unset($data['avatar'], $data['show_connections'], $data['notify_system'], $data['delegate_to']);
 
         return $data;
+    }
+
+    /** Un alter ne délègue qu'à un autre alter du même système. */
+    protected function delegateUuid(Request $request, ?string $uuid): ?string
+    {
+        if ($uuid === null) {
+            return null;
+        }
+
+        return $request->user()->alters()->where('uuid', $uuid)->exists() ? $uuid : null;
     }
 
     /** @return array<int, array{value: string, label: string}> */

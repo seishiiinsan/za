@@ -8,6 +8,7 @@ defineProps({
   posts: { type: Object, required: true },
   pendingRequests: { type: Number, default: 0 },
   pendingInvitations: { type: Number, default: 0 },
+  notifications: { type: Array, default: () => [] },
 })
 </script>
 
@@ -38,6 +39,21 @@ defineProps({
         {{ pendingRequests }} demande(s) d'abonnement en attente —
         <Link href="/follows/requests" class="underline">traiter</Link>
       </p>
+    </section>
+
+    <section v-if="notifications.length" class="space-y-2">
+      <h2 class="text-sm uppercase tracking-wide text-neutral-500">Notifications remontées</h2>
+      <p class="text-xs text-neutral-600">
+        Seuls les alters qui l'ont autorisé apparaissent ici.
+      </p>
+      <div
+        v-for="notification in notifications"
+        :key="notification.id"
+        class="rounded-lg border border-neutral-800 bg-neutral-900 p-3 text-sm"
+      >
+        {{ notification.payload?.actor ?? 'Quelqu\'un' }} — {{ notification.type }}
+        <span class="text-xs text-neutral-600">pour {{ notification.for }}</span>
+      </div>
     </section>
 
     <h2 class="text-sm uppercase tracking-wide text-neutral-500">Activité de tous les alters</h2>

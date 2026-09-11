@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AlterNotification;
 use App\Models\Post;
 use App\Support\BlockList;
 use App\Support\Front;
+use App\Support\Notifier;
 use Illuminate\Http\RedirectResponse;
 
 /**
@@ -13,7 +15,11 @@ use Illuminate\Http\RedirectResponse;
  */
 class ReactionController extends Controller
 {
-    public function __construct(protected Front $front, protected BlockList $blocks) {}
+    public function __construct(
+        protected Front $front,
+        protected BlockList $blocks,
+        protected Notifier $notifier,
+    ) {}
 
     public function store(Post $post): RedirectResponse
     {
@@ -24,6 +30,12 @@ class ReactionController extends Controller
         abort_if($post->authors->contains(fn ($author) => $this->blocks->blocks($alter, $author)), 404);
 
         $post->reactions()->syncWithoutDetaching([$alter->getKey()]);
+
+        $this->notifier->notifyAuthors($post->authors, $alter, AlterNotification::TYPE_REACTION, [
+            'actor' => $alter->name,
+            'handle' => $alter->handle,
+            'post' => $post->uuid,
+        ]);
 
         return back()->with('status', 'Réaction ajoutée.');
     }

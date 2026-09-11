@@ -3,15 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Alter;
+use App\Models\AlterNotification;
 use App\Models\Post;
 use App\Support\Front;
+use App\Support\Notifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 class PostController extends Controller
 {
-    public function __construct(protected Front $front) {}
+    public function __construct(protected Front $front, protected Notifier $notifier) {}
 
     public function store(Request $request): RedirectResponse
     {
@@ -36,6 +38,12 @@ class PostController extends Controller
 
         foreach ($invited as $coAuthor) {
             $post->authors()->attach($coAuthor->getKey(), ['accepted' => false]);
+
+            $this->notifier->notify($coAuthor, AlterNotification::TYPE_POST_INVITATION, [
+                'actor' => $alter->name,
+                'handle' => $alter->handle,
+                'post' => $post->uuid,
+            ]);
         }
 
         $post->syncStatus();

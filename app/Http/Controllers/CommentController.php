@@ -2,16 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AlterNotification;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Support\BlockList;
 use App\Support\Front;
+use App\Support\Notifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
-    public function __construct(protected Front $front, protected BlockList $blocks) {}
+    public function __construct(
+        protected Front $front,
+        protected BlockList $blocks,
+        protected Notifier $notifier,
+    ) {}
 
     public function store(Request $request, Post $post): RedirectResponse
     {
@@ -28,6 +34,12 @@ class CommentController extends Controller
         $comment = new Comment($data);
         $comment->alter_id = $alter->getKey();
         $post->comments()->save($comment);
+
+        $this->notifier->notifyAuthors($post->authors, $alter, AlterNotification::TYPE_COMMENT, [
+            'actor' => $alter->name,
+            'handle' => $alter->handle,
+            'post' => $post->uuid,
+        ]);
 
         return back()->with('status', 'Commentaire publié.');
     }
