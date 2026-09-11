@@ -7,7 +7,10 @@ const page = usePage()
 const auth = computed(() => page.props.auth)
 const flash = computed(() => page.props.flash ?? {})
 
-const links = [{ href: '/alters', label: 'Alters' }]
+const links = [
+  { href: '/alters', label: 'Alters' },
+  { href: '/follows', label: 'Abonnements' },
+]
 
 function logout() {
   router.post('/logout')
