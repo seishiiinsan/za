@@ -132,6 +132,45 @@ class NotificationTest extends TestCase
         $this->assertSame(1, $nori->notifications()->count());
     }
 
+    public function test_reading_a_shared_mailbox_notification_marks_it_read_for_everyone(): void
+    {
+        $recipient = System::factory()->create([
+            'display_name' => 'Constellation',
+            'settings' => ['messaging_mode' => MessagingMode::Shared->value],
+        ]);
+        $kai = Alter::factory()->for($recipient)->create(['handle' => 'kai']);
+        $nori = Alter::factory()->for($recipient)->create();
+        $sender = Alter::factory()->create();
+
+        $this->actingAsFront($sender)->post('/conversations', ['handle' => 'kai']);
+        $conversation = Conversation::sole();
+        $this->actingAsFront($sender)->post("/conversations/{$conversation->uuid}/messages", [
+            'content' => 'Bonjour',
+        ]);
+
+        // Kai lit : la boîte est commune, Nori n'a plus rien à traiter.
+        $this->actingAsFront($kai)->post("/notifications/{$kai->notifications()->sole()->uuid}/read");
+
+        $this->assertNotNull($kai->notifications()->sole()->read_at);
+        $this->assertNotNull($nori->notifications()->sole()->read_at);
+    }
+
+    public function test_an_individual_notification_stays_unread_for_the_others(): void
+    {
+        $system = System::factory()->create();
+        $kai = Alter::factory()->for($system)->create();
+        $nori = Alter::factory()->for($system)->create();
+        $actor = Alter::factory()->create();
+
+        $this->actingAsFront($actor)->post("/alters/{$kai->uuid}/follow");
+        $this->actingAsFront($actor)->post("/alters/{$nori->uuid}/follow");
+
+        $this->actingAsFront($kai)->post("/notifications/{$kai->notifications()->sole()->uuid}/read");
+
+        $this->assertNotNull($kai->notifications()->sole()->read_at);
+        $this->assertNull($nori->notifications()->sole()->read_at);
+    }
+
     public function test_a_notification_is_marked_read_by_its_own_system(): void
     {
         $alter = Alter::factory()->create();

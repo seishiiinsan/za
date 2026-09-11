@@ -31,7 +31,7 @@ class NotificationController extends Controller
 
         abort_unless($alterIds->contains($notification->alter_id), 404);
 
-        $notification->update(['read_at' => now()]);
+        $this->notifier->markRead($notification);
 
         return back();
     }
@@ -47,6 +47,7 @@ class NotificationController extends Controller
             'type' => $notification->type,
             'payload' => $notification->payload,
             'read' => $notification->read_at !== null,
+            'shared' => $notification->group_uuid !== null,
             'created_at' => $notification->created_at?->toIso8601String(),
             'for' => $notification->alter->name,
             // Une notification déléguée reste identifiée comme telle : on sait
