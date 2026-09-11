@@ -6,6 +6,7 @@ use App\Http\Resources\AlterResource;
 use App\Http\Resources\PostResource;
 use App\Models\Alter;
 use App\Support\Front;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -54,5 +55,13 @@ class AlterProfileController extends Controller
                 'following' => $alter->following()->wherePivot('accepted', true)->count(),
             ],
         ]);
+    }
+
+    /** Résolution d'un handle pour inviter un co-auteur. Mêmes règles que le profil public. */
+    public function lookup(string $handle): JsonResponse
+    {
+        $alter = Alter::query()->searchable()->where('handle', $handle)->firstOrFail();
+
+        return response()->json((new AlterResource($alter))->resolve());
     }
 }

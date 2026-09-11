@@ -6,6 +6,7 @@ use App\Http\Resources\AlterResource;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -33,6 +34,10 @@ class DashboardController extends Controller
             'pendingRequests' => $alters->sum(
                 fn ($alter) => $alter->followers()->wherePivot('accepted', false)->count()
             ),
+            'pendingInvitations' => DB::table('post_authors')
+                ->whereIn('alter_id', $alterIds)
+                ->where('accepted', false)
+                ->count(),
         ]);
     }
 }
