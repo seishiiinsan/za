@@ -10,6 +10,7 @@ const props = defineProps({
   isSelf: Boolean,
   isFollowing: Boolean,
   hasPendingRequest: Boolean,
+  canBlock: Boolean,
   posts: { type: Object, default: null },
   connections: { type: Object, default: null },
   counts: { type: Object, required: true },
@@ -24,6 +25,16 @@ function follow() {
 
 function unfollow() {
   router.delete(`/alters/${props.alter.id}/follow`, { preserveScroll: true })
+}
+
+function block(target) {
+  const message = target === 'system'
+    ? "Bloquer le compte entier ? Tous ses profils disparaissent, y compris ceux que vous ne connaissez pas. Za ne vous dira pas lesquels."
+    : `Bloquer ${props.alter.name} ? Les autres profils de la même personne continueront de vous voir.`
+
+  if (confirm(message)) {
+    router.post(`/alters/${props.alter.id}/block`, { target }, { preserveScroll: true })
+  }
 }
 </script>
 
@@ -53,6 +64,11 @@ function unfollow() {
         </button>
       </div>
     </header>
+
+    <div v-if="canBlock" class="flex justify-end gap-3 text-xs text-neutral-600">
+      <button class="hover:text-red-400" @click="block('alter')">Bloquer cet alter</button>
+      <button class="hover:text-red-400" @click="block('system')">Bloquer le compte</button>
+    </div>
 
     <p v-if="!visible" class="rounded-lg border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-400">
       Cet alter est privé. Ses posts apparaîtront une fois la demande acceptée.

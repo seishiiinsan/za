@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\Post;
+use App\Support\BlockList;
 use App\Support\Front;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
-    public function __construct(protected Front $front) {}
+    public function __construct(protected Front $front, protected BlockList $blocks) {}
 
     public function store(Request $request, Post $post): RedirectResponse
     {
@@ -22,6 +23,7 @@ class CommentController extends Controller
 
         abort_unless($alter->canReact(), 403, 'Ce grade de confidentialité ne permet pas de commenter.');
         abort_unless($post->isVisibleTo($alter), 404);
+        abort_if($post->authors->contains(fn ($author) => $this->blocks->blocks($alter, $author)), 404);
 
         $comment = new Comment($data);
         $comment->alter_id = $alter->getKey();

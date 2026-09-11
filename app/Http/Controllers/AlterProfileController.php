@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\AlterResource;
 use App\Http\Resources\PostResource;
 use App\Models\Alter;
+use App\Support\BlockList;
 use App\Support\Front;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,12 +18,15 @@ use Inertia\Response;
  */
 class AlterProfileController extends Controller
 {
-    public function show(Request $request, string $handle, Front $front): Response
+    public function show(Request $request, string $handle, Front $front, BlockList $blocks): Response
     {
         // Le non-listé garde son profil : c'est la recherche qui l'ignore.
         $alter = Alter::query()->withPublicProfile()->where('handle', $handle)->firstOrFail();
 
         $viewer = $front->current();
+
+        abort_if($viewer !== null && $blocks->blocks($viewer, $alter), 404);
+
         $visible = $alter->isVisibleTo($viewer);
 
         $posts = $visible
@@ -43,6 +47,7 @@ class AlterProfileController extends Controller
             'isSelf' => $viewer?->is($alter) ?? false,
             'isFollowing' => $alter->isFollowedBy($viewer),
             'hasPendingRequest' => $alter->hasPendingRequestFrom($viewer),
+            'canBlock' => $viewer !== null && $viewer->system_id !== $alter->system_id,
             'posts' => $posts ? PostResource::collection($posts) : null,
             'connections' => $alter->showsConnections() && $visible ? [
                 'followers' => AlterResource::collection(

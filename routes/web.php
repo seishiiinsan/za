@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredSystemController;
+use App\Http\Controllers\BlockController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FeedController;
@@ -76,6 +77,10 @@ Route::middleware('auth')->group(function () {
 
         Route::post('alters/{alter}/follow', [FollowController::class, 'store'])->name('follows.store');
         Route::delete('alters/{alter}/follow', [FollowController::class, 'destroy'])->name('follows.destroy');
+
+        Route::get('blocks', [BlockController::class, 'index'])->name('blocks.index');
+        Route::post('alters/{alter}/block', [BlockController::class, 'store'])->name('blocks.store');
+        Route::delete('blocks/{block}', [BlockController::class, 'destroy'])->name('blocks.destroy');
 
         Route::get('follows', [FollowController::class, 'connections'])->name('follows.index');
         Route::get('follows/requests', [FollowController::class, 'requests'])->name('follows.requests');
