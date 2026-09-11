@@ -358,11 +358,12 @@ php vendor/bin/phpunit tests/Feature/AntiCorrelationTest.php   # invariant, bloq
 
 ### Écarts assumés
 
-- **Chiffrement de `system_id` au repos** : non fait. Chiffrer la clé étrangère casserait
-  l'intégrité référentielle et les jointures. L'invariant repose ici sur un point de sortie
-  unique (`AlterResource`), `$hidden` sur le modèle, et un test bloquant qui scanne les
-  réponses publiques. Le chiffrement au repos reste à traiter au niveau du stockage
-  (volume/colonne chiffrée) dans l'issue Sécurité.
+- **Chiffrement de `system_id` au repos** : traité au niveau du volume, à l'hébergement, et
+  repoussé à plus tard (décision prise). Rien à faire côté applicatif : chiffrer la clé
+  étrangère casserait l'intégrité référentielle et les jointures. Côté code, l'invariant
+  tient par un point de sortie unique (`AlterResource`), `$hidden` sur le modèle et un test
+  bloquant qui scanne les réponses publiques. Reste à cadrer avec l'hébergement : chiffrement
+  du volume, gestion des clés, et sauvegardes chiffrées elles aussi.
 - **Suppression d'alter** : cascade dure (posts et follows partent avec). La politique de
   rétention fine fait l'objet d'une issue dédiée.
 - **Grade `lecture`** : le cahier des charges ne parle que des réactions. L'implémentation
