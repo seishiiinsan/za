@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Http\Resources;
+
+use App\Models\Alter;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/**
+ * Serializer public d'un alter. Ne contient AUCUNE donnée système :
+ * c'est le point de passage obligé de l'invariant d'anti-corrélation.
+ *
+ * @mixin Alter
+ */
+class AlterResource extends JsonResource
+{
+    /** @return array<string, mixed> */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'handle' => $this->handle,
+            'pronouns' => $this->pronouns,
+            'bio' => $this->bio,
+            'avatar_url' => $this->avatar_path ? asset('storage/'.$this->avatar_path) : null,
+            'privacy_level' => $this->privacy_level->value,
+            'is_private' => ! $this->privacy_level->isOpen(),
+        ];
+    }
+}
