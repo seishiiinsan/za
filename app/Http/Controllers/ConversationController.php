@@ -33,7 +33,12 @@ class ConversationController extends Controller
         $mine = $this->messaging->correspondentFor($alter);
 
         $conversations = $mine->conversations()
-            ->with(['participants', 'messages' => fn ($query) => $query->reorder()->latest('id')->limit(1)])
+            ->with([
+                'participants',
+                // L'auteur vient avec : l'aperçu le nomme, et le chargement
+                // tardif est refusé.
+                'messages' => fn ($query) => $query->reorder()->latest('id')->limit(1)->with('author'),
+            ])
             ->latest('conversations.updated_at')
             ->get();
 

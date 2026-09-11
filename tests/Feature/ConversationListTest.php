@@ -58,6 +58,28 @@ class ConversationListTest extends TestCase
             ->assertInertia(fn ($page) => $page->where('conversations.0.unread', false));
     }
 
+    public function test_the_list_names_the_author_of_a_received_message(): void
+    {
+        $kai = Alter::factory()->create();
+        $sora = Alter::factory()->create(['handle' => 'sora', 'name' => 'Sora']);
+
+        $this->actingAsFront($kai)->post('/conversations', ['handle' => 'sora']);
+        $conversation = Conversation::sole();
+
+        // Le message vient d'en face : l'aperçu doit nommer son auteur.
+        $this->actingAsFront($sora)->post("/conversations/{$conversation->uuid}/messages", [
+            'content' => 'On se voit jeudi ?',
+        ]);
+
+        $this->actingAsFront($kai)
+            ->get('/conversations')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('conversations.0.last_message.author', 'Sora')
+                ->where('conversations.0.last_message.mine', false)
+                ->where('conversations.0.unread', true));
+    }
+
     public function test_the_picker_offers_the_alters_already_known(): void
     {
         $kai = Alter::factory()->create();
