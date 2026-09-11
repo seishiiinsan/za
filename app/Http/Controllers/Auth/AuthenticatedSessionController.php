@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Support\Front;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +18,7 @@ class AuthenticatedSessionController extends Controller
         return Inertia::render('Auth/Login');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, Front $front): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
@@ -31,12 +32,14 @@ class AuthenticatedSessionController extends Controller
         }
 
         $request->session()->regenerate();
+        $front->ensure();
 
         return redirect()->intended(route('alters.index'));
     }
 
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request, Front $front): RedirectResponse
     {
+        $front->clear();
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
