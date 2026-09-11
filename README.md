@@ -309,52 +309,69 @@ Au moment de bloquer, choix entre deux cibles :
 
 ---
 
-## Annexe — Démarrage (MVP implémenté)
+## Annexe A — État du projet
 
-```bash
-composer install
-npm install
-cp .env.example .env
-php artisan key:generate
-touch database/database.sqlite
-php artisan migrate --seed      # compte de démo : system@za.test / password
-php artisan storage:link
-npm run build                   # ou npm run dev
-php artisan serve
-```
+*Dernière mise à jour : 11 septembre 2026. 123 tests (686 assertions), 14 migrations,
+15 branches de feature, 21 fusions dans `develop`. `main` n'a pas encore bougé : la mise en
+production attend le cadrage RGPD.*
 
-Qualité :
-
-```bash
-vendor/bin/pint --test          # style
-php vendor/bin/phpunit          # suite complète
-php vendor/bin/phpunit tests/Feature/AntiCorrelationTest.php   # invariant, bloquant en CI
-```
+Le MVP et la v2 sont livrés sur `develop`, une branche par feature, fusionnée en `--no-ff`.
 
 ### Ce que couvre le MVP
 
-| Périmètre | Où |
-|---|---|
-| Auth système (inscription, connexion, reset) | `app/Http/Controllers/Auth/`, `config/auth.php` |
-| CRUD alters + avatar | `app/Http/Controllers/AlterController.php` |
-| Front actif en session | `app/Support/Front.php`, `app/Http/Middleware/EnsureActiveAlter.php` |
-| Posts solo (pivot `post_authors` prêt pour N auteurs) | `app/Models/Post.php`, `PostController` |
-| Feed public + dashboard système agrégé | `FeedController`, `DashboardController` |
-| Follow alter ↔ alter, demandes, listes masquées par défaut | `FollowController`, `Alter::showsConnections()` |
-| Grades public / privé | `app/Enums/PrivacyLevel.php`, `Alter::isVisibleTo()` |
-| Invariant anti-corrélation | `app/Http/Resources/AlterResource.php`, `tests/Feature/AntiCorrelationTest.php` |
+| Périmètre | Où | Branche |
+|---|---|---|
+| Auth système (inscription, connexion, reset) | `app/Http/Controllers/Auth/`, `config/auth.php` | `feat/auth-system-alters` |
+| CRUD alters + avatar + profil public par handle | `app/Http/Controllers/AlterController.php`, `AlterProfileController` | `feat/auth-system-alters` |
+| Front actif en session, switch sans reconnexion | `app/Support/Front.php`, `app/Http/Middleware/EnsureActiveAlter.php` | `feat/alter-session-switch` |
+| Posts solo (pivot `post_authors` prêt pour N auteurs) | `app/Models/Post.php`, `PostController` | `feat/posts-feed` |
+| Feed public des alters suivis | `FeedController` | `feat/posts-feed` |
+| Follow alter ↔ alter, demandes, listes masquées par défaut | `FollowController`, `Alter::showsConnections()` | `feat/follow-alter` |
+| Dashboard système (feed agrégé privé) | `DashboardController` | `feat/system-dashboard` |
+| Grades public / privé | `app/Enums/PrivacyLevel.php`, `Alter::isVisibleTo()` | `feat/privacy-public-private` |
+| Invariant anti-corrélation | `app/Http/Resources/AlterResource.php`, `tests/Feature/AntiCorrelationTest.php` | `feat/anti-correlation` |
 
 ### Ce que couvre la v2
 
-| Périmètre | Où |
+| Périmètre | Où | Branche |
+|---|---|---|
+| Co-posts / cross-posts + invitations | `PostController`, `PostInvitationController` | `feat/coposts-invitations` |
+| Likes et commentaires | `ReactionController`, `CommentController`, `app/Models/Comment.php` | `feat/reactions` |
+| Grades non-listé / lecture | `app/Enums/PrivacyLevel.php` | `feat/privacy-unlisted-readonly` |
+| Blocage alter / compte | `app/Support/BlockList.php`, `BlockController` | `feat/blocking-alter-system` |
+| Messagerie, correspondant polymorphe, mode partagé | `app/Support/Messaging.php`, `ConversationController` | `feat/messaging` |
+| Migration de mode (split / merge, seuil Xh) | `app/Support/MessagingModeMigration.php` | `feat/messaging-mode-migration` |
+| Notifications par alter, remontée système, délégation | `app/Support/Notifier.php`, `NotificationController` | `feat/notifications-cross` |
+
+### Les quatre garde-fous de l'invariant
+
+L'anti-corrélation ne tient pas à une règle écrite quelque part, mais à des mécanismes
+vérifiables. Deux d'entre eux sont nés de fuites trouvées en cours d'implémentation.
+
+1. **Un point de sortie unique.** `AlterResource` est le seul chemin par lequel un alter
+   devient du JSON, et `system_id` est masqué au niveau du modèle. Un test bloquant en CI
+   scanne les réponses publiques (profils, recherche, payloads Inertia).
+2. **Des identifiants opaques.** Les clés auto-incrémentées trahissaient l'ordre de création :
+   deux alters créés à la suite portaient des numéros voisins. Systèmes, alters et posts
+   portent un uuid, seul identifiant sérialisé et seule clé de route.
+3. **Des avatars réencodés.** L'image envoyée gardait son EXIF (appareil, GPS, date de prise
+   de vue), de quoi rapprocher deux avatars. Tout envoi est décodé, redimensionné, réencodé.
+4. **Des logs masqués.** Une exception de requête écrivait le SQL avec ses valeurs : le
+   fichier de log devenait la table de corrélation que le produit s'interdit de publier.
+   Voir `app/Logging/RedactSystemId.php`.
+
+### Décisions tranchées
+
+| Question | Décision |
 |---|---|
-| Co-posts / cross-posts + invitations | `PostController`, `PostInvitationController` |
-| Likes et commentaires | `ReactionController`, `CommentController`, `app/Models/Comment.php` |
-| Grades non-listé / lecture | `app/Enums/PrivacyLevel.php` |
-| Blocage alter / compte | `app/Support/BlockList.php`, `BlockController` |
-| Messagerie, correspondant polymorphe, mode partagé | `app/Support/Messaging.php`, `ConversationController` |
-| Migration de mode (split / merge, seuil Xh) | `app/Support/MessagingModeMigration.php` |
-| Notifications par alter, remontée système, délégation | `app/Support/Notifier.php`, `NotificationController` |
+| Chiffrement de `system_id` | Au niveau du volume, à l'hébergement. Chiffrer la clé étrangère casserait les jointures. Repoussé. |
+| Suppression d'un alter | Suppression douce, restaurable. L'alter quitte toutes les surfaces ; ses posts s'affichent sous un auteur « Inconnu ». |
+| Grade `lecture` | Bloque les réactions, la publication et l'invitation comme co-auteur. |
+| Notification en boîte commune | Tous les alters du système destinataire sont notifiés ; le premier qui lit marque lu pour tout le monde. |
+| Changement de handle | Un par 30 jours, ancien handle en quarantaine autant de temps. |
+| Handle d'un alter supprimé | Libéré aussitôt ; la restauration le reprend s'il est libre, sinon en demande un autre. |
+| Sosies dans les handles | Seuls les chiffres sont normalisés (`@ka1` = `@kai`, mais `@lila` ≠ `@iiia`). |
+| Co-front (plusieurs alters actifs) | Reporté : la session ne porte qu'un front. |
 
 ### Politique des handles
 
@@ -375,6 +392,8 @@ juste après avoir été libéré, servent à se faire passer pour quelqu'un aup
 
 ### Durcissement de l'authentification
 
+Forcer un compte système, c'est atteindre d'un coup tous les alters d'une personne.
+
 - Vérification d'adresse obligatoire : un système non vérifié n'atteint que l'écran de
   vérification et ses réglages de sécurité.
 - Limitation des tentatives de connexion par couple e-mail + IP (5 par minute), plus
@@ -384,21 +403,109 @@ juste après avoir été libéré, servent à se faire passer pour quelqu'un aup
   en base ; désactivation protégée par le mot de passe. Le QR code est rendu en SVG côté
   serveur (`bacon/bacon-qr-code`), avec saisie manuelle du secret en repli.
 
+### Ce qui reste ouvert
+
+- **Cadrage RGPD et hébergement** — bloquant avant toute mise en production. Statut juridique
+  de la donnée de santé, consentement, export, droit à l'oubli d'un seul alter. Avec lui
+  viennent le chiffrement du volume, la gestion des clés et des sauvegardes chiffrées.
+- **Modération et signalement** — signalement visant l'alter, back-office minimal, sanctions,
+  et journalisation des accès au lien système ↔ alter.
+- **Purge définitive** — la suppression douce n'efface rien : délai de rétention à définir, et
+  sort d'un co-post dont un seul auteur s'en va.
+- **Capture de l'alter à la réception** — remplacerait l'heuristique d'attribution du split.
+- **Corrélation par graphe social** — atténuée (listes masquées, aucune suggestion de comptes),
+  jamais éliminée. À dire honnêtement aux utilisateurs.
+
 ### Écarts assumés
 
 - **Chiffrement de `system_id` au repos** : traité au niveau du volume, à l'hébergement, et
-  repoussé à plus tard (décision prise). Rien à faire côté applicatif : chiffrer la clé
-  étrangère casserait l'intégrité référentielle et les jointures. Côté code, l'invariant
-  tient par un point de sortie unique (`AlterResource`), `$hidden` sur le modèle et un test
-  bloquant qui scanne les réponses publiques. Reste à cadrer avec l'hébergement : chiffrement
-  du volume, gestion des clés, et sauvegardes chiffrées elles aussi.
-  Côté logs, le masquage est en place : voir `app/Logging/RedactSystemId.php`.
-- **Suppression d'alter** : cascade dure (posts et follows partent avec). La politique de
-  rétention fine fait l'objet d'une issue dédiée.
+  repoussé (décision prise). Chiffrer la clé étrangère casserait l'intégrité référentielle et
+  les jointures. Côté code, l'invariant tient par le point de sortie unique, `$hidden` sur le
+  modèle, le masquage des logs et le test bloquant.
 - **Grade `lecture`** : le cahier des charges ne parle que des réactions. L'implémentation
-  bloque aussi la publication et l'invitation comme co-auteur, au nom du libellé. À
-  confirmer, c'est une interprétation.
+  bloque aussi la publication et l'invitation comme co-auteur, au nom du libellé.
 - **Migration de mode (split)** : l'attribution des messages entrants reste une heuristique.
   Les cas ambigus dupliquent, les cas insolubles conservent le message hors conversation.
-  La capture de l'alter à la réception reste la bonne réponse à terme (issue dédiée).
-- **Modération, RGPD-santé, chiffrement au repos** : toujours ouverts (issues dédiées).
+- **Handles sosies** : la normalisation ne couvre que les chiffres. `@kal` et `@kai` peuvent
+  coexister.
+
+---
+
+## Annexe B — Faire tourner le projet en local
+
+### Prérequis
+
+| Outil | Version | Vérifier |
+|---|---|---|
+| PHP | 8.3 minimum (8.4 utilisé ici) | `php -v` |
+| Extensions PHP | `pdo_sqlite`, `sqlite3`, `mbstring`, `gd`, `intl`, `zip`, `xml` | `php -m` |
+| Composer | 2.x | `composer -V` |
+| Node | 20 minimum (22 utilisé ici) | `node -v` |
+
+L'extension `gd` n'est pas optionnelle : elle réencode les avatars, et sans elle tout envoi
+d'image échoue. Aucun serveur de base de données à installer — le développement tourne sur
+SQLite, un simple fichier.
+
+### Installation
+
+```bash
+git clone https://github.com/seishiiinsan/za.git
+cd za
+git checkout develop
+
+composer install
+npm install
+
+cp .env.example .env
+php artisan key:generate
+
+touch database/database.sqlite
+php artisan migrate --seed        # jeu de démo
+php artisan storage:link          # sert les avatars depuis public/
+```
+
+### Lancer
+
+Deux terminaux, ou `npm run build` une fois si le front ne change pas :
+
+```bash
+php artisan serve                 # http://127.0.0.1:8000
+npm run dev                       # Vite, rechargement à chaud
+```
+
+Le seeder crée un système de démonstration : **system@za.test** / **password**, avec deux
+alters (`@kai`, `@nori`), un alter extérieur (`@sora`), des posts et un abonnement.
+
+### Vérifier que tout est en place
+
+```bash
+php vendor/bin/phpunit                                         # 123 tests
+vendor/bin/pint --test                                         # style
+php vendor/bin/phpunit tests/Feature/AntiCorrelationTest.php    # invariant, bloquant en CI
+```
+
+### Les e-mails en développement
+
+`MAIL_MAILER=log` par défaut : les liens de vérification d'adresse et de réinitialisation de
+mot de passe ne partent nulle part, ils sont écrits dans `storage/logs/laravel.log`. Pour
+vérifier une adresse, ouvrez le log et copiez l'URL signée. Un compte créé par le seeder est
+déjà vérifié.
+
+### Dépannage
+
+| Symptôme | Cause | Correctif |
+|---|---|---|
+| `Target [Inertia\Ssr\Gateway] is not instantiable` | `composer install --no-scripts` : le manifeste des paquets n'a pas été construit | `php artisan package:discover` |
+| `Vite manifest not found` | Les assets n'ont jamais été compilés | `npm run build` ou `npm run dev` |
+| Avatars en 404 | Lien symbolique absent | `php artisan storage:link` |
+| `database/database.sqlite does not exist` | Fichier de base non créé | `touch database/database.sqlite` |
+| Envoi d'avatar en erreur | Extension `gd` manquante | Installer `php-gd`, redémarrer PHP |
+| Repartir de zéro | — | `php artisan migrate:fresh --seed` |
+
+### Conventions de travail
+
+- Une branche par feature (`feat/…`), fusionnée dans `develop` en `--no-ff`.
+- La CI fait tourner lint, build front et tests sur chaque pull request, avec
+  l'anti-corrélation dans un job dédié et bloquant.
+- Toute écriture sur une surface publique passe par un serializer : jamais de modèle rendu
+  directement.
