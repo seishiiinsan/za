@@ -50,6 +50,12 @@ class Messaging
             ?? MessagingMode::Personal;
     }
 
+    /** Seuil de switch, en heures : au-delà, on n'attribue plus un message entrant. */
+    public function switchThresholdHours(System $system): int
+    {
+        return max(1, (int) ($system->settings['switch_threshold_hours'] ?? 5));
+    }
+
     /** Le système montre-t-il quel alter a écrit chaque message ? */
     public function showsAuthor(System $system): bool
     {

@@ -48,6 +48,22 @@ const form = useForm({ ...props.settings })
         </p>
       </template>
 
+      <label class="block text-sm">
+        Seuil de switch (heures)
+        <input
+          v-model.number="form.switch_threshold_hours"
+          type="number"
+          min="1"
+          max="72"
+          class="mt-1 w-full rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm"
+        />
+        <span class="mt-1 block text-xs text-neutral-600">
+          Sert à répartir les messages reçus quand vous repassez en mode perso. Au-delà de ce
+          délai, un message n'est plus attribué : il est conservé et vous le retrouverez en
+          revenant au mode partagé.
+        </span>
+      </label>
+
       <button :disabled="form.processing" class="w-full rounded-md bg-violet-600 px-4 py-2 text-sm font-medium hover:bg-violet-500 disabled:opacity-50">
         Enregistrer
       </button>
