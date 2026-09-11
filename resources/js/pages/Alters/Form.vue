@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import { Head, useForm } from '@inertiajs/vue3'
 import AppLayout from '../../Layouts/AppLayout.vue'
 
@@ -21,8 +22,12 @@ const form = useForm({
   avatar: null,
 })
 
+const currentLevel = computed(() =>
+  props.privacyLevels.find((level) => level.value === form.privacy_level)
+)
+
 function submit() {
-  // POST + _method : nécessaire pour l'upload d'avatar en multipart.
+  // POST + _method : nécessaire pour l'envoi de l'avatar en multipart.
   form.post(props.alter ? `/alters/${props.alter.id}` : '/alters')
 }
 </script>
@@ -30,72 +35,91 @@ function submit() {
 <template>
   <Head :title="alter ? 'Éditer un alter' : 'Nouvel alter'" />
   <AppLayout>
-    <form class="mx-auto max-w-md space-y-4" @submit.prevent="submit">
-      <h1 class="text-xl font-semibold">{{ alter ? 'Éditer un alter' : 'Nouvel alter' }}</h1>
+    <form class="flex flex-col gap-5" @submit.prevent="submit">
+      <h1 class="font-display text-3xl">{{ alter ? 'Éditer un alter' : 'Nouvel alter' }}</h1>
 
-      <label class="block text-sm">
-        Nom
-        <input v-model="form.name" required class="mt-1 w-full rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm" />
-        <span v-if="form.errors.name" class="text-xs text-red-400">{{ form.errors.name }}</span>
-      </label>
+      <div class="za-card flex flex-col gap-4 p-6">
+        <label class="block">
+          <span class="za-label">Nom</span>
+          <input v-model="form.name" required maxlength="60" class="za-input" />
+          <span v-if="form.errors.name" class="za-error">{{ form.errors.name }}</span>
+        </label>
 
-      <label class="block text-sm">
-        Handle
-        <input v-model="form.handle" required placeholder="minuscules_et_chiffres" class="mt-1 w-full rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm" />
-        <span v-if="form.errors.handle" class="text-xs text-red-400">{{ form.errors.handle }}</span>
-      </label>
+        <label class="block">
+          <span class="za-label">Handle</span>
+          <input v-model="form.handle" required placeholder="minuscules_et_chiffres" class="za-input" />
+          <span class="za-eyebrow mt-1 block">
+            3 à 30 caractères. Modifiable une fois tous les 30 jours.
+          </span>
+          <span v-if="form.errors.handle" class="za-error">{{ form.errors.handle }}</span>
+        </label>
 
-      <label class="block text-sm">
-        Pronoms
-        <input v-model="form.pronouns" class="mt-1 w-full rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm" />
-      </label>
+        <label class="block">
+          <span class="za-label">Pronoms</span>
+          <input v-model="form.pronouns" maxlength="40" class="za-input" />
+        </label>
 
-      <label class="block text-sm">
-        Bio
-        <textarea v-model="form.bio" rows="3" class="mt-1 w-full resize-none rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm" />
-      </label>
+        <label class="block">
+          <span class="za-label">Bio</span>
+          <textarea v-model="form.bio" rows="3" maxlength="500" class="za-input resize-none" />
+        </label>
 
-      <label class="block text-sm">
-        Avatar
-        <input type="file" accept="image/*" class="mt-1 w-full text-sm text-neutral-400" @input="form.avatar = $event.target.files[0]" />
-        <span v-if="form.errors.avatar" class="text-xs text-red-400">{{ form.errors.avatar }}</span>
-      </label>
+        <label class="block">
+          <span class="za-label">Avatar</span>
+          <input
+            type="file"
+            accept="image/*"
+            class="w-full text-sm text-muted file:mr-3 file:rounded-xl file:border-0 file:bg-white/8 file:px-4 file:py-2 file:text-sm file:text-ink"
+            @input="form.avatar = $event.target.files[0]"
+          />
+          <span class="za-eyebrow mt-1 block">
+            L'image est réencodée : ses métadonnées (appareil, lieu, date) ne sont pas conservées.
+          </span>
+          <span v-if="form.errors.avatar" class="za-error">{{ form.errors.avatar }}</span>
+        </label>
+      </div>
 
-      <label class="block text-sm">
-        Grade de confidentialité
-        <select v-model="form.privacy_level" class="mt-1 w-full rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm">
-          <option v-for="level in privacyLevels" :key="level.value" :value="level.value">{{ level.label }}</option>
-        </select>
-        <span class="mt-1 block text-xs text-neutral-600">
-          {{ privacyLevels.find((level) => level.value === form.privacy_level)?.description }}
-        </span>
-      </label>
+      <div class="za-card flex flex-col gap-4 p-6">
+        <label class="block">
+          <span class="za-label">Grade de confidentialité</span>
+          <select v-model="form.privacy_level" class="za-input">
+            <option v-for="level in privacyLevels" :key="level.value" :value="level.value">
+              {{ level.label }}
+            </option>
+          </select>
+          <span class="za-eyebrow mt-1 block">{{ currentLevel?.description }}</span>
+        </label>
 
-      <label class="flex items-center gap-2 text-sm text-neutral-400">
-        <input v-model="form.show_connections" type="checkbox" />
-        Afficher mes listes followers / abonnements
-      </label>
-      <p class="text-xs text-neutral-600">Masquées par défaut : elles peuvent servir à corréler deux alters.</p>
+        <label class="flex items-start gap-3 text-sm text-muted">
+          <input v-model="form.show_connections" type="checkbox" class="mt-1 accent-[#ff9f78]" />
+          <span>
+            Afficher mes listes d'abonnés et d'abonnements
+            <span class="za-eyebrow mt-0.5 block">
+              Masquées par défaut : elles peuvent servir à rapprocher deux alters.
+            </span>
+          </span>
+        </label>
 
-      <label class="flex items-center gap-2 text-sm text-neutral-400">
-        <input v-model="form.notify_system" type="checkbox" />
-        Remonter mes notifications au dashboard système
-      </label>
+        <label class="flex items-start gap-3 text-sm text-muted">
+          <input v-model="form.notify_system" type="checkbox" class="mt-1 accent-[#ff9f78]" />
+          <span>Remonter mes notifications à « Chez toi »</span>
+        </label>
 
-      <label v-if="siblings.data.length" class="block text-sm">
-        Déléguer mes notifications
-        <select v-model="form.delegate_to" class="mt-1 w-full rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm">
-          <option :value="null">Personne</option>
-          <option v-for="sibling in siblings.data" :key="sibling.id" :value="sibling.id">{{ sibling.name }}</option>
-        </select>
-        <span class="mt-1 block text-xs text-neutral-600">
-          Un autre alter du système peut traiter vos demandes à votre place. Ce lien reste privé.
-        </span>
-      </label>
+        <label v-if="siblings.data.length" class="block">
+          <span class="za-label">Déléguer mes notifications</span>
+          <select v-model="form.delegate_to" class="za-input">
+            <option :value="null">Personne</option>
+            <option v-for="sibling in siblings.data" :key="sibling.id" :value="sibling.id">
+              {{ sibling.name }}
+            </option>
+          </select>
+          <span class="za-eyebrow mt-1 block">
+            Un autre alter du système peut traiter tes demandes. Ce lien reste privé.
+          </span>
+        </label>
+      </div>
 
-      <button :disabled="form.processing" class="w-full rounded-md bg-violet-600 px-4 py-2 text-sm font-medium hover:bg-violet-500 disabled:opacity-50">
-        Enregistrer
-      </button>
+      <button class="za-btn w-full py-3" :disabled="form.processing">Enregistrer</button>
     </form>
   </AppLayout>
 </template>

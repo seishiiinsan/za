@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { Link, router, useForm, usePage } from '@inertiajs/vue3'
+import Avatar from './Avatar.vue'
 
 const props = defineProps({
   post: { type: Object, required: true },
@@ -32,59 +33,78 @@ function destroy() {
     router.delete(`/posts/${props.post.id}`, { preserveScroll: true })
   }
 }
+
+function when(value) {
+  return new Date(value).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })
+}
 </script>
 
 <template>
-  <article class="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
-    <header class="mb-2 flex items-center gap-2 text-sm">
-      <template v-for="author in post.authors" :key="author.id">
-        <span v-if="author.deleted" class="flex items-center gap-2 text-neutral-500">
-          <span class="h-5 w-5 rounded-full bg-neutral-800" />
-          {{ author.name }}
-        </span>
-        <Link v-else :href="`/@${author.handle}`" class="font-medium text-neutral-100 hover:text-violet-400">
-          {{ author.name }}
-          <span class="text-neutral-500">@{{ author.handle }}</span>
-        </Link>
-      </template>
-      <span class="ml-auto text-xs text-neutral-600">{{ new Date(post.created_at).toLocaleString() }}</span>
+  <article class="za-card za-card-lifted p-5 sm:p-6">
+    <header class="flex items-center gap-3">
+      <!-- Co-écriture : les avatars se chevauchent, le lien reste par auteur. -->
+      <div class="flex items-center">
+        <template v-for="(author, index) in post.authors" :key="author.id">
+          <Avatar
+            :alter="author"
+            :size="40"
+            :class="index > 0 ? '-ml-3 ring-2 ring-ground' : ''"
+          />
+        </template>
+      </div>
+
+      <div class="min-w-0">
+        <p class="flex flex-wrap items-center gap-x-1.5 text-[0.95rem] font-semibold">
+          <template v-for="(author, index) in post.authors" :key="author.id">
+            <span v-if="index > 0" class="font-normal text-faint">et</span>
+            <Link v-if="author.handle" :href="`/@${author.handle}`" class="hover:text-accent">{{ author.name }}</Link>
+            <span v-else class="text-muted">{{ author.name }}</span>
+          </template>
+        </p>
+        <p class="text-xs text-faint">
+          <span v-if="post.authors.length > 1">écrit à deux · </span>{{ when(post.created_at) }}
+        </p>
+      </div>
+
+      <button v-if="owned" class="ml-auto text-xs text-faint transition hover:text-danger" @click="destroy">
+        Supprimer
+      </button>
     </header>
-    <p class="whitespace-pre-line text-sm text-neutral-200">{{ post.content }}</p>
-    <footer class="mt-3 flex items-center gap-4 text-xs">
+
+    <p class="mt-4 text-[1.02rem] leading-relaxed whitespace-pre-line text-ink/90">{{ post.content }}</p>
+
+    <footer class="mt-4 flex flex-wrap items-center gap-2">
       <button
-        class="hover:text-violet-400"
-        :class="post.reacted ? 'text-violet-400' : 'text-neutral-500'"
+        class="za-btn-quiet"
+        :class="post.reacted ? 'bg-accent/15 text-accent' : ''"
         :disabled="!page.props.auth.activeAlter"
         @click="toggleReaction"
       >
         ♥ {{ post.reactions_count }}
       </button>
-      <button class="text-neutral-500 hover:text-neutral-200" @click="showComments = !showComments">
-        Commentaires ({{ post.comments_count }})
+      <button class="za-btn-quiet" @click="showComments = !showComments">
+        {{ post.comments_count }} réponse{{ post.comments_count > 1 ? 's' : '' }}
       </button>
-      <button v-if="owned" class="ml-auto text-neutral-500 hover:text-red-400" @click="destroy">Supprimer</button>
     </footer>
 
-    <section v-if="showComments" class="mt-3 space-y-3 border-t border-neutral-800 pt-3">
-      <div v-for="entry in post.comments" :key="entry.id" class="text-sm">
-        <p class="text-xs text-neutral-500">
-          <Link v-if="entry.author.handle" :href="`/@${entry.author.handle}`" class="hover:text-violet-400">
-            {{ entry.author.name }}
-          </Link>
-          <span v-else>{{ entry.author.name }}</span>
-          <button class="ml-2 text-neutral-600 hover:text-red-400" @click="destroyComment(entry)">retirer</button>
-        </p>
-        <p class="whitespace-pre-line text-neutral-200">{{ entry.content }}</p>
+    <section v-if="showComments" class="mt-4 flex flex-col gap-4 border-t border-line-soft pt-4">
+      <div v-for="entry in post.comments" :key="entry.id" class="flex gap-3">
+        <Avatar :alter="entry.author" :size="30" />
+        <div class="min-w-0 flex-1">
+          <p class="text-xs text-faint">
+            <Link v-if="entry.author.handle" :href="`/@${entry.author.handle}`" class="font-semibold text-muted hover:text-accent">
+              {{ entry.author.name }}
+            </Link>
+            <span v-else class="font-semibold text-muted">{{ entry.author.name }}</span>
+            <button class="ml-2 text-faint hover:text-danger" @click="destroyComment(entry)">retirer</button>
+          </p>
+          <p class="text-sm leading-relaxed whitespace-pre-line text-ink/85">{{ entry.content }}</p>
+        </div>
       </div>
 
       <form v-if="page.props.auth.activeAlter" class="flex gap-2" @submit.prevent="submitComment">
-        <input
-          v-model="comment.content"
-          placeholder="Commenter"
-          maxlength="1000"
-          class="flex-1 rounded-md border border-neutral-800 bg-neutral-950 px-3 py-1.5 text-xs outline-none focus:border-violet-500"
-        />
-        <button class="rounded-md border border-neutral-800 px-3 py-1.5 text-xs hover:border-violet-600">Envoyer</button>
+        <input v-model="comment.content" maxlength="1000" placeholder="Répondre" class="za-input py-2.5 text-sm" />
+        <button class="za-btn-ghost py-2.5">Envoyer</button>
       </form>
     </section>
   </article>

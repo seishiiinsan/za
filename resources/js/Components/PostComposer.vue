@@ -1,18 +1,23 @@
 <script setup>
-import { useForm, usePage } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
+import { useForm, usePage } from '@inertiajs/vue3'
+import Avatar from './Avatar.vue'
 
 const page = usePage()
 const active = computed(() => page.props.auth.activeAlter)
+
+const open = ref(false)
 const form = useForm({ content: '', co_authors: [] })
-const coAuthorHandle = ref('')
 const coAuthors = ref([])
+const handle = ref('')
+const lookupError = ref('')
 
 async function addCoAuthor() {
-  const handle = coAuthorHandle.value.trim().replace(/^@/, '')
-  if (!handle || coAuthors.value.some((a) => a.handle === handle)) return
+  const wanted = handle.value.trim().replace(/^@/, '')
+  if (!wanted || coAuthors.value.some((alter) => alter.handle === wanted)) return
 
-  const response = await fetch(`/api/alters/${handle}`, { headers: { Accept: 'application/json' } })
+  const response = await fetch(`/api/alters/${wanted}`, { headers: { Accept: 'application/json' } })
+
   if (!response.ok) {
     lookupError.value = "Aucun alter public ne porte ce handle."
     return
@@ -21,16 +26,14 @@ async function addCoAuthor() {
   const alter = await response.json()
   coAuthors.value.push(alter)
   form.co_authors.push(alter.id)
-  coAuthorHandle.value = ''
+  handle.value = ''
   lookupError.value = ''
 }
 
 function removeCoAuthor(alter) {
-  coAuthors.value = coAuthors.value.filter((a) => a.id !== alter.id)
+  coAuthors.value = coAuthors.value.filter((entry) => entry.id !== alter.id)
   form.co_authors = form.co_authors.filter((id) => id !== alter.id)
 }
-
-const lookupError = ref('')
 
 function submit() {
   form.post('/posts', {
@@ -38,60 +41,74 @@ function submit() {
     onSuccess: () => {
       form.reset('content', 'co_authors')
       coAuthors.value = []
+      open.value = false
     },
   })
 }
 </script>
 
 <template>
-  <form class="rounded-lg border border-neutral-800 bg-neutral-900 p-4" @submit.prevent="submit">
-    <p class="mb-2 text-xs text-neutral-500">
-      Publié par <span class="text-neutral-300">{{ active?.name }}</span>
-    </p>
-    <textarea
-      v-model="form.content"
-      rows="3"
-      maxlength="2000"
-      placeholder="Quoi de neuf ?"
-      class="w-full resize-none rounded-md border border-neutral-800 bg-neutral-950 p-3 text-sm outline-none focus:border-violet-500"
-    />
-    <p v-if="form.errors.content" class="mt-1 text-xs text-red-400">{{ form.errors.content }}</p>
-    <div class="mt-3 space-y-2">
-      <div class="flex flex-wrap items-center gap-2">
+  <!-- Replié, le composer est une seule ligne : le feed reste l'essentiel. -->
+  <div class="za-card p-4">
+    <button
+      v-if="!open"
+      type="button"
+      class="flex w-full items-center gap-3 text-left"
+      @click="open = true"
+    >
+      <Avatar v-if="active" :alter="active" :size="38" />
+      <span class="flex-1 text-[0.95rem] text-faint">Raconte ta journée, {{ active?.name }}…</span>
+      <span class="za-btn">Publier</span>
+    </button>
+
+    <form v-else class="flex flex-col gap-3" @submit.prevent="submit">
+      <div class="flex items-center gap-3">
+        <Avatar v-if="active" :alter="active" :size="38" />
+        <span class="text-sm text-muted">
+          Tu écris en tant que <span class="font-semibold text-ink">{{ active?.name }}</span>
+        </span>
+      </div>
+
+      <textarea
+        v-model="form.content"
+        rows="4"
+        maxlength="2000"
+        autofocus
+        placeholder="Quoi de neuf ?"
+        class="za-input resize-none text-[1rem] leading-relaxed"
+      />
+      <p v-if="form.errors.content" class="za-error">{{ form.errors.content }}</p>
+
+      <div v-if="coAuthors.length" class="flex flex-wrap gap-2">
         <span
           v-for="alter in coAuthors"
           :key="alter.id"
-          class="flex items-center gap-1 rounded-full border border-neutral-800 px-2 py-0.5 text-xs text-neutral-300"
+          class="flex items-center gap-2 rounded-full border border-line px-2.5 py-1 text-xs text-muted"
         >
+          <Avatar :alter="alter" :size="18" />
           {{ alter.name }}
-          <button type="button" class="text-neutral-500 hover:text-red-400" @click="removeCoAuthor(alter)">×</button>
+          <button type="button" class="text-faint hover:text-danger" @click="removeCoAuthor(alter)">×</button>
         </span>
       </div>
-      <div class="flex gap-2">
+
+      <div class="flex flex-wrap items-center gap-2">
         <input
-          v-model="coAuthorHandle"
+          v-model="handle"
           placeholder="Inviter un co-auteur (@handle)"
-          class="flex-1 rounded-md border border-neutral-800 bg-neutral-950 px-3 py-1.5 text-xs outline-none focus:border-violet-500"
+          class="za-input flex-1 py-2 text-sm"
           @keydown.enter.prevent="addCoAuthor"
         />
-        <button type="button" class="rounded-md border border-neutral-800 px-3 py-1.5 text-xs hover:border-violet-600" @click="addCoAuthor">
-          Inviter
-        </button>
+        <button type="button" class="za-btn-ghost py-2" @click="addCoAuthor">Inviter</button>
       </div>
-      <p v-if="lookupError" class="text-xs text-red-400">{{ lookupError }}</p>
-      <p v-if="coAuthors.length" class="text-xs text-neutral-600">
-        Le post restera en attente tant que chaque invité·e n'aura pas accepté.
+      <p v-if="lookupError" class="za-error">{{ lookupError }}</p>
+      <p v-if="coAuthors.length" class="za-eyebrow">
+        Le post restera privé tant que chaque invité·e n'aura pas accepté.
       </p>
-    </div>
 
-    <div class="mt-3 flex justify-end">
-      <button
-        type="submit"
-        :disabled="form.processing"
-        class="rounded-md bg-violet-600 px-4 py-1.5 text-sm font-medium hover:bg-violet-500 disabled:opacity-50"
-      >
-        Publier
-      </button>
-    </div>
-  </form>
+      <div class="flex justify-end gap-2">
+        <button type="button" class="za-btn-quiet" @click="open = false">Annuler</button>
+        <button type="submit" class="za-btn" :disabled="form.processing">Publier</button>
+      </div>
+    </form>
+  </div>
 </template>
