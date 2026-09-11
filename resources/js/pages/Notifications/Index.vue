@@ -21,35 +21,33 @@ function markRead(notification) {
 <template>
   <Head title="Notifications" />
   <AppLayout>
-    <h1 class="text-xl font-semibold">Notifications</h1>
+    <div class="flex flex-col gap-5">
+      <h1 class="font-display text-3xl">Notifications</h1>
 
-    <ul class="space-y-2">
-      <li
+      <div
         v-for="notification in notifications"
         :key="notification.id"
-        class="flex items-center gap-3 rounded-lg border p-3 text-sm"
-        :class="notification.read ? 'border-neutral-900 text-neutral-500' : 'border-neutral-800 bg-neutral-900'"
+        class="flex flex-wrap items-center gap-3 rounded-[1.25rem] border px-4 py-3 text-sm"
+        :class="notification.read
+          ? 'border-line-soft text-faint'
+          : 'border-line bg-surface/70 text-ink'"
       >
-        <div class="min-w-0">
-          <p>
+        <span class="min-w-0 flex-1">
+          <span class="block truncate">
             {{ notification.payload?.actor ?? 'Quelqu\'un' }} — {{ labels[notification.type] ?? notification.type }}
-          </p>
-          <p class="text-xs text-neutral-600">
+          </span>
+          <span class="block truncate text-xs text-faint">
             pour {{ notification.for }}
-            <span v-if="notification.delegated" class="text-violet-400">· délégué</span>
-            <span v-if="notification.shared" class="text-neutral-600">· boîte commune</span>
-          </p>
-        </div>
-        <button
-          v-if="!notification.read"
-          class="ml-auto text-xs text-neutral-500 hover:text-neutral-200"
-          @click="markRead(notification)"
-        >
+            <span v-if="notification.delegated" class="text-accent">· délégué</span>
+            <span v-if="notification.shared">· boîte commune</span>
+          </span>
+        </span>
+        <button v-if="!notification.read" class="za-btn-quiet" @click="markRead(notification)">
           {{ notification.shared ? 'Marquer lu pour tous' : 'Marquer lu' }}
         </button>
-      </li>
-    </ul>
+      </div>
 
-    <p v-if="!notifications.length" class="text-sm text-neutral-500">Rien à signaler.</p>
+      <p v-if="!notifications.length" class="text-sm text-muted">Rien à signaler.</p>
+    </div>
   </AppLayout>
 </template>

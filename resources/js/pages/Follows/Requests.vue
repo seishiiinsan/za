@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3'
 import AppLayout from '../../Layouts/AppLayout.vue'
+import Avatar from '../../Components/Avatar.vue'
 
 defineProps({ requests: { type: Object, required: true } })
 
@@ -16,20 +17,22 @@ function reject(alter) {
 <template>
   <Head title="Demandes d'abonnement" />
   <AppLayout>
-    <h1 class="text-xl font-semibold">Demandes d'abonnement</h1>
+    <div class="flex flex-col gap-5">
+      <h1 class="font-display text-3xl">Demandes d'abonnement</h1>
 
-    <ul class="space-y-2">
-      <li v-for="alter in requests.data" :key="alter.id" class="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900 p-3">
-        <Link :href="`/@${alter.handle}`" class="text-sm hover:text-violet-400">
-          {{ alter.name }} <span class="text-neutral-600">@{{ alter.handle }}</span>
+      <div v-for="alter in requests.data" :key="alter.id" class="za-card flex flex-wrap items-center gap-3 p-4">
+        <Avatar :alter="alter" :size="42" />
+        <Link :href="`/@${alter.handle}`" class="min-w-0 flex-1 truncate text-sm transition hover:text-accent">
+          <span class="font-semibold">{{ alter.name }}</span>
+          <span class="text-faint"> @{{ alter.handle }}</span>
         </Link>
-        <div class="ml-auto flex gap-2 text-xs">
-          <button class="rounded-md bg-violet-600 px-3 py-1 hover:bg-violet-500" @click="approve(alter)">Accepter</button>
-          <button class="rounded-md border border-neutral-700 px-3 py-1 hover:border-red-500" @click="reject(alter)">Refuser</button>
+        <div class="flex gap-2">
+          <button class="za-btn py-2" @click="approve(alter)">Accepter</button>
+          <button class="za-btn-ghost py-2" @click="reject(alter)">Refuser</button>
         </div>
-      </li>
-    </ul>
+      </div>
 
-    <p v-if="!requests.data.length" class="text-sm text-neutral-500">Aucune demande.</p>
+      <p v-if="!requests.data.length" class="text-sm text-muted">Aucune demande en attente.</p>
+    </div>
   </AppLayout>
 </template>

@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3'
 import AppLayout from '../../Layouts/AppLayout.vue'
+import Avatar from '../../Components/Avatar.vue'
 
 defineProps({
   followers: { type: Object, required: true },
@@ -11,26 +12,41 @@ defineProps({
 <template>
   <Head title="Abonnements" />
   <AppLayout>
-    <div class="flex items-center justify-between">
-      <h1 class="text-xl font-semibold">Relations du front actif</h1>
-      <Link href="/follows/requests" class="text-sm text-violet-400 hover:text-violet-300">Demandes</Link>
-    </div>
+    <div class="flex flex-col gap-6">
+      <header class="flex flex-wrap items-center gap-3">
+        <h1 class="font-display text-3xl">Relations du front actif</h1>
+        <Link href="/follows/requests" class="za-btn-quiet ml-auto">Demandes</Link>
+      </header>
 
-    <section class="grid gap-4 sm:grid-cols-2">
-      <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
-        <h2 class="mb-2 text-sm uppercase tracking-wide text-neutral-500">Followers</h2>
-        <Link v-for="a in followers.data" :key="a.id" :href="`/@${a.handle}`" class="block text-sm hover:text-violet-400">
-          {{ a.name }} <span class="text-neutral-600">@{{ a.handle }}</span>
-        </Link>
-        <p v-if="!followers.data.length" class="text-sm text-neutral-600">Personne.</p>
-      </div>
-      <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
-        <h2 class="mb-2 text-sm uppercase tracking-wide text-neutral-500">Abonnements</h2>
-        <Link v-for="a in following.data" :key="a.id" :href="`/@${a.handle}`" class="block text-sm hover:text-violet-400">
-          {{ a.name }} <span class="text-neutral-600">@{{ a.handle }}</span>
-        </Link>
-        <p v-if="!following.data.length" class="text-sm text-neutral-600">Personne.</p>
-      </div>
-    </section>
+      <section class="grid gap-4 sm:grid-cols-2">
+        <div class="za-card p-5">
+          <h2 class="za-eyebrow mb-3">Abonnés</h2>
+          <Link
+            v-for="alter in followers.data"
+            :key="alter.id"
+            :href="`/@${alter.handle}`"
+            class="flex items-center gap-2.5 py-1.5 text-sm transition hover:text-accent"
+          >
+            <Avatar :alter="alter" :size="28" />
+            <span class="min-w-0 truncate">{{ alter.name }} <span class="text-faint">@{{ alter.handle }}</span></span>
+          </Link>
+          <p v-if="!followers.data.length" class="text-sm text-faint">Personne pour l'instant.</p>
+        </div>
+
+        <div class="za-card p-5">
+          <h2 class="za-eyebrow mb-3">Abonnements</h2>
+          <Link
+            v-for="alter in following.data"
+            :key="alter.id"
+            :href="`/@${alter.handle}`"
+            class="flex items-center gap-2.5 py-1.5 text-sm transition hover:text-accent"
+          >
+            <Avatar :alter="alter" :size="28" />
+            <span class="min-w-0 truncate">{{ alter.name }} <span class="text-faint">@{{ alter.handle }}</span></span>
+          </Link>
+          <p v-if="!following.data.length" class="text-sm text-faint">Personne pour l'instant.</p>
+        </div>
+      </section>
+    </div>
   </AppLayout>
 </template>

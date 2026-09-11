@@ -10,25 +10,27 @@ defineProps({ posts: { type: Object, required: true } })
 <template>
   <Head title="Feed" />
   <AppLayout>
-    <PostComposer />
+    <div class="flex flex-col gap-5">
+      <PostComposer />
 
-    <div class="space-y-3">
       <PostCard v-for="post in posts.data" :key="post.id" :post="post" />
+
+      <div v-if="!posts.data.length" class="za-card flex flex-col items-center gap-3 px-6 py-12 text-center">
+        <span class="font-display text-4xl text-accent">座</span>
+        <p class="text-muted">Ton feed est vide pour l'instant.</p>
+        <Link href="/search" class="za-btn">Trouver des alters à suivre</Link>
+      </div>
+
+      <nav v-if="posts.meta?.last_page > 1" class="flex flex-wrap justify-center gap-1.5 pb-4">
+        <Link
+          v-for="link in posts.meta.links"
+          :key="link.label"
+          :href="link.url ?? '#'"
+          class="rounded-xl px-3 py-1.5 text-sm"
+          :class="link.active ? 'bg-white/10 text-ink' : 'text-faint hover:text-muted'"
+          v-html="link.label"
+        />
+      </nav>
     </div>
-
-    <p v-if="!posts.data.length" class="text-sm text-neutral-500">
-      Rien ici. Suis des alters depuis la <Link href="/search" class="text-violet-400">recherche</Link>.
-    </p>
-
-    <nav v-if="posts.meta?.last_page > 1" class="flex gap-2 text-sm">
-      <Link
-        v-for="link in posts.meta.links"
-        :key="link.label"
-        :href="link.url ?? '#'"
-        class="rounded px-2 py-1"
-        :class="link.active ? 'bg-neutral-800 text-neutral-100' : 'text-neutral-500 hover:text-neutral-200'"
-        v-html="link.label"
-      />
-    </nav>
   </AppLayout>
 </template>

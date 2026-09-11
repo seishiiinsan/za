@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3'
 import AppLayout from '../Layouts/AppLayout.vue'
+import Avatar from '../Components/Avatar.vue'
 import PostCard from '../Components/PostCard.vue'
 
 defineProps({
@@ -13,53 +14,56 @@ defineProps({
 </script>
 
 <template>
-  <Head title="Dashboard" />
+  <Head title="Chez toi" />
   <AppLayout>
-    <section class="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
-      <h1 class="text-lg font-semibold">Dashboard système</h1>
-      <p class="text-sm text-neutral-500">Vue privée. Cette agrégation n'existe sur aucune surface publique.</p>
+    <div class="flex flex-col gap-6">
+      <header class="flex flex-col gap-2">
+        <h1 class="font-display text-3xl">Chez toi</h1>
+        <p class="text-sm leading-relaxed text-muted">
+          Toute l'activité du système, rassemblée. Personne d'autre ne voit cette page — aucune
+          route publique n'expose cette vue.
+        </p>
+      </header>
 
-      <div class="mt-3 flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-2">
         <Link
           v-for="alter in alters.data"
           :key="alter.id"
           :href="`/@${alter.handle}`"
-          class="rounded-full border border-neutral-800 px-3 py-1 text-xs hover:border-violet-600"
+          class="flex items-center gap-2 rounded-full border border-line px-2.5 py-1.5 text-sm transition hover:border-accent/60"
         >
+          <Avatar :alter="alter" :size="24" />
           {{ alter.name }}
         </Link>
       </div>
 
-      <p v-if="pendingInvitations" class="mt-3 text-sm text-violet-300">
-        {{ pendingInvitations }} invitation(s) de co-écriture —
-        <Link href="/posts/invitations" class="underline">traiter</Link>
-      </p>
-
-      <p v-if="pendingRequests" class="mt-3 text-sm text-violet-300">
-        {{ pendingRequests }} demande(s) d'abonnement en attente —
-        <Link href="/follows/requests" class="underline">traiter</Link>
-      </p>
-    </section>
-
-    <section v-if="notifications.length" class="space-y-2">
-      <h2 class="text-sm uppercase tracking-wide text-neutral-500">Notifications remontées</h2>
-      <p class="text-xs text-neutral-600">
-        Seuls les alters qui l'ont autorisé apparaissent ici.
-      </p>
-      <div
-        v-for="notification in notifications"
-        :key="notification.id"
-        class="rounded-lg border border-neutral-800 bg-neutral-900 p-3 text-sm"
-      >
-        {{ notification.payload?.actor ?? 'Quelqu\'un' }} — {{ notification.type }}
-        <span class="text-xs text-neutral-600">pour {{ notification.for }}</span>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <Link href="/follows/requests" class="za-card flex items-baseline gap-3 p-5 transition hover:border-accent/40">
+          <span class="font-display text-4xl text-accent">{{ pendingRequests }}</span>
+          <span class="text-sm text-muted">demande{{ pendingRequests > 1 ? 's' : '' }} d'abonnement</span>
+        </Link>
+        <Link href="/posts/invitations" class="za-card flex items-baseline gap-3 p-5 transition hover:border-mint/40">
+          <span class="font-display text-4xl text-mint">{{ pendingInvitations }}</span>
+          <span class="text-sm text-muted">invitation{{ pendingInvitations > 1 ? 's' : '' }} de co-écriture</span>
+        </Link>
       </div>
-    </section>
 
-    <h2 class="text-sm uppercase tracking-wide text-neutral-500">Activité de tous les alters</h2>
-    <div class="space-y-3">
-      <PostCard v-for="post in posts.data" :key="post.id" :post="post" owned />
+      <section v-if="notifications.length" class="flex flex-col gap-3">
+        <h2 class="za-eyebrow">Notifications remontées</h2>
+        <div class="za-card divide-y divide-line-soft">
+          <p v-for="notification in notifications" :key="notification.id" class="px-4 py-3 text-sm text-muted">
+            <span class="text-ink">{{ notification.payload?.actor ?? 'Quelqu\'un' }}</span>
+            — {{ notification.type }}
+            <span class="text-faint">pour {{ notification.for }}</span>
+          </p>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="za-eyebrow">Activité de tous les alters</h2>
+        <PostCard v-for="post in posts.data" :key="post.id" :post="post" owned />
+        <p v-if="!posts.data.length" class="text-sm text-muted">Aucun post pour l'instant.</p>
+      </section>
     </div>
-    <p v-if="!posts.data.length" class="text-sm text-neutral-500">Aucun post pour l'instant.</p>
   </AppLayout>
 </template>
