@@ -8,6 +8,7 @@ const auth = computed(() => page.props.auth)
 const flash = computed(() => page.props.flash ?? {})
 
 const links = [
+  { href: '/dashboard', label: 'Dashboard' },
   { href: '/feed', label: 'Feed' },
   { href: '/alters', label: 'Alters' },
   { href: '/follows', label: 'Abonnements' },

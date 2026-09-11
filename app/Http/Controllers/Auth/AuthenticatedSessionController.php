@@ -34,7 +34,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
         $front->ensure();
 
-        return redirect()->intended(route('alters.index'));
+        return redirect()->intended(route('dashboard'));
     }
 
     public function destroy(Request $request, Front $front): RedirectResponse
