@@ -6,10 +6,11 @@ import PostCard from '../../Components/PostCard.vue'
 
 const props = defineProps({
   alter: { type: Object, required: true },
+  visible: Boolean,
   isSelf: Boolean,
   isFollowing: Boolean,
   hasPendingRequest: Boolean,
-  posts: { type: Object, required: true },
+  posts: { type: Object, default: null },
   connections: { type: Object, default: null },
   counts: { type: Object, required: true },
 })
@@ -35,7 +36,7 @@ function unfollow() {
       <div class="min-w-0 flex-1">
         <h1 class="text-lg font-semibold">{{ alter.name }}</h1>
         <p class="text-sm text-neutral-500">@{{ alter.handle }} <span v-if="alter.pronouns">· {{ alter.pronouns }}</span></p>
-        <p v-if="alter.bio" class="mt-2 whitespace-pre-line text-sm text-neutral-300">{{ alter.bio }}</p>
+        <p v-if="visible && alter.bio" class="mt-2 whitespace-pre-line text-sm text-neutral-300">{{ alter.bio }}</p>
         <p class="mt-2 text-xs text-neutral-500">
           {{ counts.followers }} followers · {{ counts.following }} abonnements
         </p>
@@ -53,24 +54,30 @@ function unfollow() {
       </div>
     </header>
 
-    <div class="space-y-3">
-      <PostCard v-for="post in posts.data" :key="post.id" :post="post" :owned="isSelf" />
-    </div>
-    <p v-if="!posts.data.length" class="text-sm text-neutral-500">Aucun post.</p>
+    <p v-if="!visible" class="rounded-lg border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-400">
+      Cet alter est privé. Ses posts apparaîtront une fois la demande acceptée.
+    </p>
 
-    <section v-if="connections" class="grid gap-4 sm:grid-cols-2">
-      <div>
-        <h2 class="mb-2 text-sm uppercase tracking-wide text-neutral-500">Followers</h2>
-        <Link v-for="a in connections.followers.data" :key="a.id" :href="`/@${a.handle}`" class="block text-sm text-neutral-300 hover:text-violet-400">
-          {{ a.name }} <span class="text-neutral-600">@{{ a.handle }}</span>
-        </Link>
+    <template v-else>
+      <div class="space-y-3">
+        <PostCard v-for="post in posts.data" :key="post.id" :post="post" :owned="isSelf" />
       </div>
-      <div>
-        <h2 class="mb-2 text-sm uppercase tracking-wide text-neutral-500">Abonnements</h2>
-        <Link v-for="a in connections.following.data" :key="a.id" :href="`/@${a.handle}`" class="block text-sm text-neutral-300 hover:text-violet-400">
-          {{ a.name }} <span class="text-neutral-600">@{{ a.handle }}</span>
-        </Link>
-      </div>
-    </section>
+      <p v-if="!posts.data.length" class="text-sm text-neutral-500">Aucun post.</p>
+
+      <section v-if="connections" class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <h2 class="mb-2 text-sm uppercase tracking-wide text-neutral-500">Followers</h2>
+          <Link v-for="a in connections.followers.data" :key="a.id" :href="`/@${a.handle}`" class="block text-sm text-neutral-300 hover:text-violet-400">
+            {{ a.name }} <span class="text-neutral-600">@{{ a.handle }}</span>
+          </Link>
+        </div>
+        <div>
+          <h2 class="mb-2 text-sm uppercase tracking-wide text-neutral-500">Abonnements</h2>
+          <Link v-for="a in connections.following.data" :key="a.id" :href="`/@${a.handle}`" class="block text-sm text-neutral-300 hover:text-violet-400">
+            {{ a.name }} <span class="text-neutral-600">@{{ a.handle }}</span>
+          </Link>
+        </div>
+      </section>
+    </template>
   </AppLayout>
 </template>

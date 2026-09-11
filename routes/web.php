@@ -11,6 +11,7 @@ use App\Http\Controllers\FeedController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FrontController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -72,4 +73,5 @@ Route::middleware('auth')->group(function () {
 /*
  * Surfaces publiques : uniquement des alters, jamais de système.
  */
+Route::get('search', [SearchController::class, 'index'])->name('search');
 Route::get('@{handle}', [AlterProfileController::class, 'show'])->name('alters.show');

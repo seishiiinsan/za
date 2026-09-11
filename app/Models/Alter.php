@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\PrivacyLevel;
 use Database\Factories\AlterFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -77,6 +78,16 @@ class Alter extends Model
             ->exists();
     }
 
+    /** Le profil (posts compris) est-il lisible par $viewer ? */
+    public function isVisibleTo(?Alter $viewer): bool
+    {
+        if ($viewer !== null && $viewer->is($this)) {
+            return true;
+        }
+
+        return $this->privacy_level->isOpen() || $this->isFollowedBy($viewer);
+    }
+
     /** Un alter privé fait valider ses abonnés. */
     public function requiresFollowApproval(): bool
     {
@@ -87,5 +98,12 @@ class Alter extends Model
     public function showsConnections(): bool
     {
         return (bool) ($this->settings['show_connections'] ?? false);
+    }
+
+    /** @param Builder<Alter> $query */
+    public function scopeSearchable(Builder $query): void
+    {
+        // MVP : public et privé restent cherchables (les grades non-listé/lecture arrivent en v2).
+        $query->whereIn('privacy_level', [PrivacyLevel::Public->value, PrivacyLevel::Private->value]);
     }
 }
