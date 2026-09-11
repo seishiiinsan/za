@@ -356,6 +356,22 @@ php vendor/bin/phpunit tests/Feature/AntiCorrelationTest.php   # invariant, bloq
 | Migration de mode (split / merge, seuil Xh) | `app/Support/MessagingModeMigration.php` |
 | Notifications par alter, remontée système, délégation | `app/Support/Notifier.php`, `NotificationController` |
 
+### Politique des handles
+
+Le handle (`@kai`) est l'identité publique d'un alter : URL de profil, signature des posts,
+cible d'une invitation ou d'un message. Deux handles qui se ressemblent, ou un handle repris
+juste après avoir été libéré, servent à se faire passer pour quelqu'un auprès de ses abonnés.
+
+- **Forme** : 3 à 30 caractères, minuscules, chiffres et `_`. Mots de service réservés
+  (admin, support, securite…).
+- **Unicité** sur une forme canonique : casse ignorée, `_` retirés, caractères sosies ramenés
+  à un seul (`1`, `l`, `i` → `i` ; `0` → `o` ; `3` → `e` ; `4` → `a` ; `5` → `s` ; `7` → `t`).
+  `@ka1nu1t` ne peut donc pas cohabiter avec `@kai_nuit`.
+- **Changement** : une fois tous les 30 jours. L'ancien handle part en quarantaine pour la
+  même durée — son propriétaire peut le reprendre, personne d'autre.
+- **Suppression** : le handle est libéré immédiatement. L'original est mémorisé ; à la
+  restauration il est repris s'il est encore libre, sinon le système en choisit un autre.
+
 ### Durcissement de l'authentification
 
 - Vérification d'adresse obligatoire : un système non vérifié n'atteint que l'écran de

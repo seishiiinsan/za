@@ -4,7 +4,7 @@ import AppLayout from '../../Layouts/AppLayout.vue'
 
 defineProps({
   alters: { type: Object, required: true },
-  trashed: { type: Object, required: true },
+  trashed: { type: Array, required: true },
 })
 
 function destroy(alter) {
@@ -14,7 +14,14 @@ function destroy(alter) {
 }
 
 function restore(alter) {
-  router.post(`/alters/${alter.id}/restore`)
+  // Le handle est libéré dès la suppression : il peut avoir été repris.
+  const handle = alter.handle_available
+    ? alter.previous_handle
+    : prompt(`@${alter.previous_handle} n'est plus libre. Nouveau handle pour ${alter.name} :`)
+
+  if (handle) {
+    router.post(`/alters/${alter.id}/restore`, { handle })
+  }
 }
 </script>
 
@@ -52,17 +59,23 @@ function restore(alter) {
 
     <p v-if="!alters.data.length" class="text-sm text-neutral-500">Aucun alter pour l'instant.</p>
 
-    <section v-if="trashed.data.length" class="space-y-2">
+    <section v-if="trashed.length" class="space-y-2">
       <h2 class="text-sm uppercase tracking-wide text-neutral-500">Supprimés</h2>
       <p class="text-xs text-neutral-600">
-        Invisibles partout : profil, recherche, feed, listes d'abonnements. Restaurables tels quels.
+        Invisibles partout : profil, recherche, feed, listes d'abonnements. Leur handle est
+        reparti dans le stock : à la restauration, il faudra en choisir un autre s'il a été pris.
       </p>
       <div
-        v-for="alter in trashed.data"
+        v-for="alter in trashed"
         :key="alter.id"
         class="flex items-center gap-3 rounded-lg border border-dashed border-neutral-800 p-3 text-sm text-neutral-500"
       >
-        <span>Alter supprimé</span>
+        <span>
+          {{ alter.name }}
+          <span class="text-neutral-600">
+            @{{ alter.previous_handle }}{{ alter.handle_available ? '' : ' — repris' }}
+          </span>
+        </span>
         <button class="ml-auto text-xs text-violet-400 hover:text-violet-300" @click="restore(alter)">
           Restaurer
         </button>
